@@ -7,5 +7,4 @@
   "background_color": "#090a13",
   "theme_color": "#090a13",
   "description": "Personal Dungeon Crawler Command Center planner",
-  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
-}
+"icons": [{"src":"icon-cat.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
