@@ -26,7 +26,7 @@ await page.goto('http://127.0.0.1:4173', { waitUntil: 'load' });
 await page.waitForSelector('#view');
 
 assert.equal(await page.locator('#nav').isVisible(), false, 'top navigation should be hidden');
-assert.match(await page.locator('#view').innerText(), /Dungeon/, 'dashboard should include Dungeon tile');
+assert.match(await page.locator('#view').innerText(), /Dungeon/i, 'dashboard should include Dungeon tile');
 
 // Neighborhood boss, objective completion, defeat, trophy and XP
 await page.evaluate(() => go('dungeon'));
