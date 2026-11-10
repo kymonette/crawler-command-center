@@ -1,0 +1,28 @@
+name: Feature branch browser smoke test
+
+on:
+  push:
+    branches:
+      - feature/crawler-command-center-2.0
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Start local preview server
+        run: |
+          python3 -m http.server 4173 --directory . > /tmp/ccc-server.log 2>&1 &
+          echo $! > /tmp/ccc-server.pid
+      - name: Run browser smoke tests
+        run: node tests/smoke.mjs

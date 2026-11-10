@@ -1,5 +1,5 @@
-const CACHE = "crawler-command-center-v2";
-const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.png"];
+const CACHE = "crawler-command-center-v3";
+const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.png", "./rpg.js"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))));
 self.addEventListener("fetch", event => {
