@@ -69,7 +69,7 @@ await page.evaluate(() => petDetail(0));
 assert.equal(await page.locator('#petEdit input[name="name"]').inputValue(), 'Test Dog One');
 assert.equal(await page.locator('#view').locator('input[name="name"]').count(), 1, 'only the selected pet profile should be rendered');
 assert.doesNotMatch(await page.locator('#view').innerText(), /Test Dog Two/, 'other pet profiles must not appear in detail view');
-assert.match(await page.locator('#view').innerText(), /Original entry/, 'existing symptom history must remain');
+assert.equal(await page.locator('#petSym0 textarea[name="notes"]').inputValue(), 'Original entry', 'existing symptom history must remain');
 await page.locator('#petEdit input[name="name"]').fill('Edited Test Dog');
 await page.locator('#petEdit button[type="submit"]').click();
 assert.equal(await page.locator('#petEdit input[name="name"]').inputValue(), 'Edited Test Dog', 'pet profile edits should save');
