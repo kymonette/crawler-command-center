@@ -63,4 +63,6 @@
   window.daily=function(){let out=dailyHTML();out=out.replace(/<button class="btn" onclick="setD\('sleep',[0-9]+\)">([0-9]+)h<\/button>/g,(m,n)=>'<button class="btn '+(String(window.dailySelectedSleep)===n?'primary':'')+'" onclick="setD(\'sleep\','+n+')">'+n+'h</button>');out=out.replace(/<label>Other drinks<\/label><input[^>]*name="otherDrinks"[^>]*>/,'');out=out.replace(/<label>Gold gained<\/label><input[^>]*name="moneyIn"[^>]*>/,m=>'<label>Gold gained ($)<\/label>'+m.replace('type="text"','type="number" step="0.01" min="0"'));out=out.replace(/<label>Gold spent<\/label><input[^>]*name="moneyOut"[^>]*>/,m=>'<label>Gold spent ($)<\/label>'+m.replace('type="text"','type="number" step="0.01" min="0"'));return out};
   Object.defineProperty(window,'dailySelectedSleep',{get:()=>String((db.daily[$id('dailyDate')?.value||today()]||{}).sleep||'')});
   check();
+  /* The original app's renderer closes over global function bindings. Keep those bindings in sync with the RPG overrides. */
+  home=window.home;render=window.render;bind=window.bind;petDetail=window.petDetail;stats=window.stats;daily=window.daily;
 })();
