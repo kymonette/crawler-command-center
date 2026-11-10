@@ -65,4 +65,5 @@
   check();
   /* The original app's renderer closes over global function bindings. Keep those bindings in sync with the RPG overrides. */
   home=window.home;render=window.render;bind=window.bind;petDetail=window.petDetail;stats=window.stats;daily=window.daily;
+  render();
 })();
