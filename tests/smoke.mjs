@@ -71,7 +71,13 @@ assert.doesNotMatch(await page.locator('#view').innerText(), /Test Dog Two/, 'ot
 assert.match(await page.locator('#view').innerText(), /Original entry/, 'existing symptom history must remain');
 await page.locator('#petEdit input[name="name"]').fill('Edited Test Dog');
 await page.locator('#petEdit button[type="submit"]').click();
-assert.match(await page.locator('#view').innerText(), /Edited Test Dog/, 'pet profile edits should save');
+assert.equal(await page.locator('#petEdit input[name="name"]').inputValue(), 'Edited Test Dog', 'pet profile edits should save');
+await page.locator('#petSym0 input[name="symptom"]').fill('Edited itching');
+await page.locator('#petSym0 button').first().click();
+assert.equal(await page.locator('#petSym0 input[name="symptom"]').inputValue(), 'Edited itching', 'symptom entries should be editable and saved');
+const savedPet = await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).dogs[0]);
+assert.equal(savedPet.name, 'Edited Test Dog');
+assert.equal(savedPet.symptoms[0].symptom, 'Edited itching');
 
 // Stats should contain visual progress bars; settings remains reachable
 await page.evaluate(() => go('stats'));
