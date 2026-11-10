@@ -45,7 +45,7 @@ const neighborhoodId = await page.evaluate(() => JSON.parse(localStorage.getItem
 await page.locator('#rpgBossForm input[name="name"]').fill('Borough Test Boss');
 await page.locator('#rpgBossForm select[name="tier"]').selectOption('Borough Boss');
 await page.locator('#rpgBossForm select[name="prereqs"]').selectOption(neighborhoodId);
-await page.locator('#rpgBossForm button[type="submit"]').click();
+await page.locator('#rpgBossForm button').last().click();
 await page.getByText('Borough Test Boss', { exact: true }).waitFor();
 assert.match(await page.locator('#view').innerText(), /UNLOCKED/, 'borough boss should unlock after prerequisite defeat');
 
