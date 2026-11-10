@@ -66,7 +66,8 @@ assert.equal(await page.locator('input[name="moneyOut"]').getAttribute('type'), 
 // Pet detail should show one pet only, retain and edit symptom history
 await page.evaluate(() => go('dogs'));
 await page.evaluate(() => petDetail(0));
-assert.match(await page.locator('#view').innerText(), /Test Dog One/);
+assert.equal(await page.locator('#petEdit input[name="name"]').inputValue(), 'Test Dog One');
+assert.equal(await page.locator('#view').locator('input[name="name"]').count(), 1, 'only the selected pet profile should be rendered');
 assert.doesNotMatch(await page.locator('#view').innerText(), /Test Dog Two/, 'other pet profiles must not appear in detail view');
 assert.match(await page.locator('#view').innerText(), /Original entry/, 'existing symptom history must remain');
 await page.locator('#petEdit input[name="name"]').fill('Edited Test Dog');
