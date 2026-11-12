@@ -116,7 +116,7 @@
   window.saveDaily=function(){
     const date=$id('dailyDate')?.value||window.ccSelectedDailyDate||today();
     window.ccSelectedDailyDate=date;db.daily[date]??={};const d=db.daily[date];
-    document.querySelectorAll('#view input[name],#view textarea[name]').forEach(x=>{if(x.name!=='date')d[x.name]=x.value});
+    document.querySelectorAll('#view input[name],#view textarea[name]').forEach(x=>{if(x.name!=='date'&&!x.closest('#structuredQuestForm'))d[x.name]=x.value});
     d.schedule=[...document.querySelectorAll('#scheduleRows .row')].map(r=>({time:r.children[0].value,activity:r.children[1].value}));
     save();alert('Daily record saved for '+date+'.');
   };
