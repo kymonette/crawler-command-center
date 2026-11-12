@@ -95,11 +95,19 @@
     const addForm='<form id="structuredQuestForm" class="rpgitem"><h3>ADD ANOTHER QUEST</h3><label>Quest name</label><input name="name" required maxlength="100" placeholder="What needs doing?"><label>Quest type</label><select name="type"><option selected>Daily</option><option>Weekly</option><option>One-time</option></select><button class="btn gold" type="submit">＋ Add quest</button><small class="rpgmuted">Add as many as you need. The form stays here after each one.</small></form>';
     return panel('QUEST BOARD',activeList+completedList+addForm,'s12');
   }
+  function dashboardDailyPanel(){
+    const daily=db.rpg.quests.filter(q=>q.type==='Daily');
+    const active=daily.filter(questActive);
+    const done=daily.length-active.length;
+    const body=active.length?active.map(questMarkup).join(''):'<p class="rpgmuted">No daily quests waiting. Either you are ahead of schedule or the System is hiding something.</p>';
+    const progress=daily.length?'<small class="rpgmuted">'+done+' / '+daily.length+' daily quests cleared today</small>':'';
+    return panel('TODAY\'S DAILY QUESTS',progress+body,'s12');
+  }
   const previousHome=window.home;
   window.home=function(){
     let out=previousHome();
     const pos=out.indexOf('<div class="grid">');
-    if(pos>=0)out=out.slice(0,pos)+questPanel()+out.slice(pos);
+    if(pos>=0)out=out.slice(0,pos)+dashboardDailyPanel()+out.slice(pos);
     return out;
   };
   const previousDaily=window.daily;
