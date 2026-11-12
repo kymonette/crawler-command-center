@@ -60,11 +60,12 @@ await page.locator('#structuredQuestForm input[name="name"]').fill('Wash dishes'
 await page.locator('#structuredQuestForm select[name="type"]').selectOption('Daily');
 await page.locator('#structuredQuestForm button[type="submit"]').click();
 assert.match(await page.locator('#view').innerText(), /Wash dishes/, 'daily quest should be created');
-await page.getByRole('button', { name: 'Complete quest' }).click();
-assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).rpg.quests[0].donePeriods.length), 1);
 await page.evaluate(() => go('home'));
 assert.match(await page.locator('#view').innerText(), /Wash dishes/, 'active quests should appear on dashboard');
 await page.evaluate(() => go('daily'));
+await page.getByRole('button', { name: 'Complete quest' }).click();
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).rpg.quests[0].donePeriods.length), 1);
+await page.evaluate(() => go('home'));
 await page.locator('#dailyDate').fill('2026-11-05');
 await page.locator('textarea[name="notes"]').fill('Saved on selected date');
 await page.getByRole('button', { name: 'Save Daily Record' }).click();
