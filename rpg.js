@@ -99,11 +99,9 @@
     const daily=db.rpg.quests.filter(q=>q.type==='Daily');
     const active=daily.filter(questActive);
     const done=daily.length-active.length;
-    const tasks=(db.daily[dayKey()]?.todo||[]).filter(t=>!t.done);
     const structured=active.map(questMarkup).join('');
-    const legacy=tasks.map(t=>'<div class="task"><input type="checkbox" onchange="toggleTask(\''+t.id+'\',this.checked)"><span>'+esc2(t.text)+'</span></div>').join('');
     const progress=daily.length?'<small class="rpgmuted">'+done+' / '+daily.length+' structured daily quests cleared today</small>':'';
-    const body=structured+legacy;
+    const body=structured;
     return panel('TODAY\'S DAILY QUESTS',progress+(body||'<p class="rpgmuted">No daily quests waiting. Add one on the Daily Page quest board.</p>'),'s12');
   }
   const previousHome=window.home;
