@@ -19,11 +19,74 @@
   function level(){const xp=db.rpg.xpEvents.reduce((n,e)=>n+(+e.amount||0),0);return{xp,level:Math.floor(xp/250)+1,progress:xp%250}}
   function systemVoice(msg,type){
     const text=String(msg||'');
-    if(text.startsWith('Achievement unlocked:'))return 'ACHIEVEMENT DETECTED. Try to look surprised, crawler. The System has prepared a very small amount of applause.';
-    if(type==='BOSS')return text.startsWith('BOSS DOWN:')?'THREAT NEUTRALIZED. Your survival has been noted. Do not let it become a personality.':'NEW THREAT REGISTERED. The System recommends confidence, preparation, and less screaming.';
-    if(type==='QUEST')return text.startsWith('Quest cleared:')?'OBJECTIVE COMPLETE. A rare display of follow-through. The System is almost moved.':'NEW OBJECTIVE RECEIVED. Add it to the pile. What could possibly go wrong?';
-    if(type==='XP')return 'EXPERIENCE ACQUIRED. Look at you, developing a measurable skill set.';
-    return 'ACTIVITY LOGGED. The System saw that. It sees most things. Unfortunately.';
+    const pools={
+      achievement:[
+        'ACHIEVEMENT UNLOCKED. The System would congratulate you, but it does not want to encourage this behavior.',
+        'A shiny new badge. Try not to let it go to your head. The System has seen what happens.',
+        'MILESTONE CONFIRMED. Somewhere, a tiny bureaucrat just stamped your paperwork.',
+        'Well, look who is collecting accomplishments instead of collecting excuses.',
+        'The achievement gallery has a new resident. Please keep your screaming to a tasteful level.',
+        'RECOGNITION AWARDED. This is not affection. Do not make it weird.'
+      ],
+      bossWin:[
+        'BOSS DOWN. Please enjoy your trophy. The System will be keeping the security footage.',
+        'THREAT ELIMINATED. That went better than the System's insurance department expected.',
+        'You survived a boss fight. Statistically inconvenient for your enemies.',
+        'VICTORY REGISTERED. Try not to start believing your own hype.',
+        'The boss has been handled. Cleanup on aisle YOU DID THAT.',
+        'A formidable enemy defeated. The System is updating your file from “questionable” to “annoyingly capable.”'
+      ],
+      bossNew:[
+        'NEW THREAT DETECTED. Stretch first. The System hates paperwork caused by preventable injuries.',
+        'A boss has entered the chat. Your odds are now a matter of public entertainment.',
+        'HOSTILE ENTITY REGISTERED. Confidence is good. A plan would be better.',
+        'The next problem has a name and apparently a health bar. Lovely.',
+        'Boss encounter unlocked. The System recommends preparation over dramatic speeches.',
+        'Something large and inconvenient is now your problem. Congratulations.'
+      ],
+      questDone:[
+        'OBJECTIVE COMPLETE. Look at that: a task, completed. The System is trying not to cry.',
+        'Quest cleared. You may now enjoy the rare sensation of having actually finished something.',
+        'TASK VERIFIED. The bar was low, yet you have cleared it with style.',
+        'One less thing lurking on your to-do list. The System approves of this development.',
+        'You did the thing. The System checked twice because it was genuinely surprised.',
+        'QUEST COMPLETE. Please accept this imaginary fanfare and get on with your day.'
+      ],
+      questNew:[
+        'NEW OBJECTIVE RECEIVED. Add it to the pile. What could possibly go wrong?',
+        'Another quest. Your calendar just made a small, frightened noise.',
+        'TASK REGISTERED. The System hopes you have learned from previous questionable decisions.',
+        'A fresh objective appears. Try completing this one before adopting twelve more.',
+        'New quest detected. The System has prepared absolutely no emotional support.',
+        'Your mission list grows. Your free time sends its regards.'
+      ],
+      xp:[
+        'EXPERIENCE ACQUIRED. Look at you, developing a measurable skill set.',
+        'XP CREDITED. The numbers go up. Your enemies are presumably furious.',
+        'Progress detected. The System has updated your official file from “potentially useful.”',
+        'A little more experience for the pile. Keep this up and you may become difficult to manage.',
+        'NUMERICAL IMPROVEMENT CONFIRMED. Try not to become insufferable.',
+        'You earned that XP. The System checked the receipts.'
+      ],
+      general:[
+        'ACTIVITY LOGGED. The System saw that. It sees most things. Unfortunately.',
+        'Noted. The System has filed this under “things the crawler actually did.”',
+        'Your actions have been recorded. No, you cannot expense the emotional damage.',
+        'A development! The System will alert absolutely nobody important.',
+        'Logged for posterity. And by posterity, we mean the next time you need proof.',
+        'The System has witnessed your productivity. It is choosing to remain cautiously optimistic.'
+      ]
+    };
+    let key='general';
+    if(text.startsWith('Achievement unlocked:'))key='achievement';
+    else if(type==='BOSS')key=text.startsWith('BOSS DOWN:')?'bossWin':'bossNew';
+    else if(type==='QUEST')key=text.startsWith('Quest cleared:')?'questDone':'questNew';
+    else if(type==='XP')key='xp';
+    const choices=pools[key];
+    const recent=(db.rpg.log||[]).slice(0,3).map(e=>e.broadcast).filter(Boolean);
+    const fresh=choices.filter(line=>!recent.includes(line));
+    const options=fresh.length?fresh:choices.filter(line=>line!==recent[0]);
+    return options[Math.floor(Math.random()*options.length)]||choices[0];
   }
   function log(msg,type){db.rpg.log.unshift({id:crypto.randomUUID(),date:new Date().toISOString(),msg,type,broadcast:systemVoice(msg,type)});db.rpg.log=db.rpg.log.slice(0,300)}
   function award(id,amount,msg){if(db.rpg.xpEvents.some(e=>e.id===id))return;db.rpg.xpEvents.push({id,amount:Math.max(0,+amount||0),date:new Date().toISOString(),msg});log(msg+' · +'+amount+' XP','XP')}
