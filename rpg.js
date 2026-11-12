@@ -195,6 +195,9 @@
     .quest-row{margin:8px 0}.rpgitem summary{cursor:pointer;padding:4px}
     #petEdit[hidden],form[hidden]{display:none!important}
   `;
+  /* Rebind the original script's lexical renderer functions after the final RPG overrides. */
+  home=window.home;daily=window.daily;bind=window.bind;render=window.render;
+
   /* Gold labels were duplicated by the first patch; replace the label once, in place. */
   const dailyBeforeFix=window.daily;
   window.daily=function(){
