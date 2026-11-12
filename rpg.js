@@ -105,7 +105,7 @@
   window.daily=function(){
     let out=previousDaily();
     out=out.replace(/<label>Hours of sleep<\/label><input[^>]*name="sleep"[^>]*>/,'');
-    out=out.replace(/<section class="panel s4"><h3>QUEST LOG<\\/h3>[\s\S]*?<\/section>/,questPanel());
+    out=out.replace(/<section class="panel s4"><h3>QUEST LOG<\/h3>[\s\S]*?<\/section>/,questPanel());
     return out;
   };
   /* Keep selected date stable and save to that exact date; never advance the page. */
