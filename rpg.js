@@ -66,4 +66,145 @@
   /* The original app's renderer closes over global function bindings. Keep those bindings in sync with the RPG overrides. */
   home=window.home;render=window.render;bind=window.bind;petDetail=window.petDetail;stats=window.stats;daily=window.daily;
   render();
+
+  /* Play-test usability fixes: structured quests, compact editing, stable daily date. */
+  db.rpg.quests??=[];
+  const dayKey=()=>today();
+  function weekKey(date=dayKey()){
+    const d=new Date(date+'T12:00:00');const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function questPeriod(q){return q.type==='Daily'?dayKey():q.type==='Weekly'?weekKey():'once'}
+  function questActive(q){return !(q.donePeriods||[]).includes(questPeriod(q))}
+  function questMarkup(q){
+    const done=!questActive(q);
+    return '<div class="rpgitem quest-row"><div class="row between"><b>'+esc2(q.name)+'</b><span class="tag">'+esc2(q.type)+'</span></div><div class="row between"><small class="rpgmuted">'+(done?'COMPLETED THIS '+(q.type==='One-time'?'RUN':q.type.toUpperCase()):'ACTIVE QUEST')+'</small><button class="btn '+(done?'':'gold')+'" '+(done?'disabled':'onclick="rpgQuestComplete(\''+q.id+'\')"')+'>'+(done?'✓ Complete':'Complete quest')+'</button></div></div>';
+  }
+  window.rpgQuestComplete=function(id){
+    const q=db.rpg.quests.find(x=>x.id===id);if(!q||!questActive(q))return;
+    q.donePeriods??=[];const period=questPeriod(q);q.donePeriods.push(period);
+    award('structured-quest:'+id+':'+period,10,'Quest completed: '+q.name);
+    log('Quest cleared: '+q.name+'. The System is legally required to act impressed.','QUEST');
+    save();check();render();
+  };
+  function questPanel(){
+    const active=db.rpg.quests.filter(questActive);
+    const done=db.rpg.quests.filter(q=>!questActive(q));
+    return panel('QUEST BOARD',active.map(questMarkup).join('')||'<p class="rpgmuted">No active quests. Suspiciously peaceful.</p>'+
+      (done.length?'<details class="rpgitem"><summary>Completed this period ('+done.length+')</summary>'+done.map(questMarkup).join('')+'</details>':'' )+
+      '<form id="structuredQuestForm" class="rpgitem"><h3>REGISTER A QUEST</h3><label>Quest name</label><input name="name" required maxlength="100" placeholder="What needs doing?"><label>Quest type</label><select name="type"><option>Daily</option><option>Weekly</option><option>One-time</option></select><button class="btn gold">Add quest</button></form>','s12');
+  }
+  const previousHome=window.home;
+  window.home=function(){
+    let out=previousHome();
+    const pos=out.indexOf('<div class="grid">');
+    if(pos>=0)out=out.slice(0,pos)+questPanel()+out.slice(pos);
+    return out;
+  };
+  const previousDaily=window.daily;
+  window.daily=function(){
+    let out=previousDaily();
+    out=out.replace(/<div class="row">\$\{\[5,6,7,8,9,10\][\s\S]*?<\/div>\$\{field\('Hours of sleep',[\s\S]*?\)\}/,'
+})();');
+    out=out.replace(/\$\{field\('Hours of sleep','sleep',d\.sleep\|\|'','number'\)\}/,'');
+    out=out.replace(/\$\{panel\('QUEST LOG',[\s\S]*?,'s4'\)\}/, '${questPanel()}');
+    return out;
+  };
+  /* Keep selected date stable and save to that exact date; never advance the page. */
+  window.dRec=function(){
+    const date=$id('dailyDate')?.value||window.ccSelectedDailyDate||today();
+    window.ccSelectedDailyDate=date;db.daily[date]??={};return db.daily[date];
+  };
+  window.saveDaily=function(){
+    const date=$id('dailyDate')?.value||window.ccSelectedDailyDate||today();
+    window.ccSelectedDailyDate=date;db.daily[date]??={};const d=db.daily[date];
+    document.querySelectorAll('#view input[name],#view textarea[name]').forEach(x=>{if(x.name!=='date')d[x.name]=x.value});
+    d.schedule=[...document.querySelectorAll('#scheduleRows .row')].map(r=>({time:r.children[0].value,activity:r.children[1].value}));
+    save();alert('Daily record saved for '+date+'.');
+  };
+  const oldBindQuests=window.bind;
+  window.bind=function(){
+    oldBindQuests();
+    const f=$id('structuredQuestForm');
+    if(f)f.onsubmit=e=>{
+      e.preventDefault();const name=new FormData(f).get('name')?.toString().trim(),type=new FormData(f).get('type');
+      if(!name)return;
+      db.rpg.quests.push({id:crypto.randomUUID(),name,type,createdAt:today(),donePeriods:[]});
+      log('New '+type.toLowerCase()+' quest registered: '+name+'. Try not to make it weird.','QUEST');
+      save();render();
+    };
+  };
+  /* A reliable book form and a compact finished-book card. */
+  window.addBook=function(){
+    const p=document.createElement('section');p.className='panel s12';
+    p.innerHTML='<h3>ADD TO LIBRARY</h3><form id="bookForm">'+
+      field('Book title','name')+field('Author','author')+field('Series / volume','series')+
+      field('Current page','pages','0','number')+field('Total pages','total','','number')+
+      '<label>Genre(s) — separate with commas</label><input name="genres" placeholder="Fantasy, LitRPG, Horror">'+
+      '<label>Shelf</label><select name="status">'+['Want to Read','Currently Reading','Finished','DNF'].map(x=>'<option>'+x+'</option>').join('')+'</select>'+
+      field('Rating (1–5)','rating','')+'<label>Cover art</label><input type="file" name="photo" accept="image/*">'+area('Review / notes','review')+
+      '<button class="btn gold" type="submit">Add book</button><button class="btn" type="button" onclick="render()">Cancel</button></form>';
+    $id('view').prepend(p);
+    $id('bookForm').onsubmit=e=>{
+      e.preventDefault();const f=e.currentTarget;if(!f.reportValidity())return;
+      const fd=new FormData(f),o={};['name','author','series','pages','total','status','rating','review'].forEach(k=>o[k]=String(fd.get(k)||''));
+      o.genres=String(fd.get('genres')||'').split(',').map(x=>x.trim()).filter(Boolean);
+      o.pages=Number(o.pages)||0;o.total=Number(o.total)||0;o.finishedDate=o.status==='Finished'?today():'';
+      const file=f.elements.photo.files?.[0];const done=()=>{db.books.push(o);save();check();render()};
+      if(file){const reader=new FileReader();reader.onload=()=>{o.photo=reader.result;done()};reader.onerror=()=>alert('The cover image could not be read. Try again without it.');reader.readAsDataURL(file)}else done();
+    };
+  };
+  const oldReadingPage=window.reading;
+  window.reading=function(){
+    let out=oldReadingPage();
+    out=out.replace(/<label>Current page \/ total<\/label>[\s\S]*?<small>[^<]*<\/small>/g,(block)=>block);
+    /* Hide page-tracking controls only on finished books; keep shelf/status and history. */
+    const temp=document.createElement('div');temp.innerHTML=out;
+    temp.querySelectorAll('.bookcard').forEach((card,i)=>{
+      const b=db.books[i];if(!b||b.status!=='Finished')return;
+      card.querySelectorAll('label,input, .chart, small').forEach(el=>{
+        if(el.closest('select'))return;
+        if(el.matches('label')&&el.textContent.includes('Reading status'))return;
+        if(el.matches('input')||el.matches('.chart')||el.matches('small')||el.textContent.includes('Current page'))el.remove();
+      });
+    });
+    return temp.innerHTML;
+  };
+  /* Symptom history and profile are read-only until the user presses Edit. */
+  window.petDetail=function(i){
+    const p=db.dogs[i];if(!p)return;const view=$id('view');
+    const profile='<div class="rpgitem"><div class="row between"><b>'+esc2(p.name)+' · PROFILE</b><button class="btn" type="button" onclick="togglePetEditor()">Edit profile</button></div><p>'+esc2(p.breed||'Breed not set')+' · '+esc2(p.age||'Age not set')+'</p><p>Weight: '+esc2(p.weight||'—')+'</p><p>Medications: '+esc2(p.medications||'—')+'</p><p>Allergies: '+esc2(p.allergies||'—')+'</p><p>'+esc2(p.notes||'No notes recorded.')+'</p><form id="petEdit" hidden><label>Name</label><input name="name" value="'+esc2(p.name)+'"><label>Breed</label><input name="breed" value="'+esc2(p.breed||'')+'"><label>Birthday / age</label><input name="age" value="'+esc2(p.age||'')+'"><label>Weight</label><input name="weight" value="'+esc2(p.weight||'')+'"><label>Medications</label><input name="medications" value="'+esc2(p.medications||'')+'"><label>Allergies</label><input name="allergies" value="'+esc2(p.allergies||'')+'"><label>Notes</label><textarea name="notes">'+esc2(p.notes||'')+'</textarea><button class="btn gold">Save profile</button><button class="btn" type="button" onclick="togglePetEditor()">Cancel</button></form></div>';
+    const history=(p.symptoms||[]).map((x,j)=>'<details class="rpgitem"><summary><b>'+esc2(x.symptom)+'</b> · '+esc2(x.date||'No date')+' · '+esc2(x.severity||'')+'</summary><p>'+esc2(x.kind||'')+' · '+esc2(x.duration||'')+'</p><p>'+esc2(x.notes||'')+'</p><button class="btn" type="button" onclick="editPetSymptom('+i+','+j+')">Edit entry</button><form id="petSym'+j+'" hidden><label>Symptom</label><input name="symptom" value="'+esc2(x.symptom)+'"><label>Date</label><input name="date" type="date" value="'+esc2(x.date||'')+'"><label>Severity</label><select name="severity">'+['Mild','Moderate','Severe','Emergency'].map(v=>'<option '+(x.severity===v?'selected':'')+'>'+v+'</option>').join('')+'</select><label>Type</label><input name="kind" value="'+esc2(x.kind||'')+'"><label>Duration</label><input name="duration" value="'+esc2(x.duration||'')+'"><label>Notes</label><textarea name="notes">'+esc2(x.notes||'')+'</textarea><button class="btn gold" type="button" onclick="savePetSymptom('+i+','+j+')">Save entry</button><button class="btn danger" type="button" onclick="deletePetSymptom('+i+','+j+')">Delete entry</button></form></details>').join('')||'<p class="rpgmuted">No symptom history yet.</p>';
+    view.innerHTML='<div class="row" style="margin:8px 0"><button class="btn" onclick="go(\'dogs\')">← BACK TO PETS</button></div><div class="grid">'+panel('PET PROFILE',profile,'s12')+panel('SYMPTOM HISTORY',history,'s12')+panel('LOG A SYMPTOM','<form id="newPetSym"><label>Symptom / issue</label><input name="symptom" required><label>Date</label><input name="date" type="date" value="'+today()+'"><label>Severity</label><select name="severity"><option>Mild</option><option>Moderate</option><option>Severe</option><option>Emergency</option></select><label>Type</label><select name="kind"><option>New symptom</option><option>Recurring issue</option><option>Resolved</option><option>Other observation</option></select><label>Duration / frequency</label><input name="duration"><label>Notes / possible triggers</label><textarea name="notes"></textarea><button class="btn gold">Save symptom</button></form>','s12')+'</div>';
+    $id('petEdit').onsubmit=e=>{e.preventDefault();Object.assign(p,Object.fromEntries(new FormData(e.currentTarget)));save();petDetail(i)};
+    $id('newPetSym').onsubmit=e=>{e.preventDefault();p.symptoms??=[];p.symptoms.push(Object.fromEntries(new FormData(e.currentTarget)));save();petDetail(i)};
+  };
+  window.togglePetEditor=function(){const f=$id('petEdit');if(f)f.hidden=!f.hidden};
+  window.editPetSymptom=function(i,j){const f=$id('petSym'+j);if(f)f.hidden=!f.hidden};
+  window.savePetSymptom=function(i,j){const f=$id('petSym'+j);if(!f)return;Object.assign(db.dogs[i].symptoms[j],Object.fromEntries(new FormData(f)));save();petDetail(i)};
+  window.deletePetSymptom=function(i,j){if(confirm('Delete this symptom entry?')){db.dogs[i].symptoms.splice(j,1);save();petDetail(i)}};
+  /* Distinct neon dungeon tiles and wrap-safe labels. */
+  style.textContent += `
+    .modulegrid button{min-width:0;min-height:112px;height:auto;padding:14px 10px;white-space:normal;overflow:visible}
+    .modulegrid button b{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.25;text-align:center}
+    .modulegrid button[onclick*="dungeon"]{background:linear-gradient(145deg,#3a164d,#15172e 75%);border-color:#ff3da6}
+    .modulegrid button[onclick*="trophies"]{background:linear-gradient(145deg,#46320b,#171b2b 75%);border-color:#eaff00}
+    .modulegrid button[onclick*="achievements"]{background:linear-gradient(145deg,#0c3b49,#111a2b 75%);border-color:#00eaff}
+    .modulegrid button[onclick*="systemLog"]{background:linear-gradient(145deg,#48202c,#111a2b 75%);border-color:#ff6b8a}
+    .modulegrid button[onclick*="recaps"]{background:linear-gradient(145deg,#153d2b,#111a2b 75%);border-color:#b7ff00}
+    .quest-row{margin:8px 0}.rpgitem summary{cursor:pointer;padding:4px}
+    #petEdit[hidden],form[hidden]{display:none!important}
+  `;
+  /* Gold labels were duplicated by the first patch; replace the label once, in place. */
+  const dailyBeforeFix=window.daily;
+  window.daily=function(){
+    let out=dailyBeforeFix();
+    out=out.replace(/<label>Gold gained<\/label>/g,'<label>Gold gained ($)</label>').replace(/<label>Gold spent<\/label>/g,'<label>Gold spent ($)</label>');
+    out=out.replace(/<label>Gold gained \(\$\)<\/label><label>Gold gained \(\$\)<\/label>/g,'<label>Gold gained ($)</label>');
+    out=out.replace(/<label>Gold spent \(\$\)<\/label><label>Gold spent \(\$\)<\/label>/g,'<label>Gold spent ($)</label>');
+    return out;
+  };
+  /* Keep the lexical function bindings used by the original single-file renderer aligned. */
+  home=window.home;daily=window.daily;reading=window.reading;addBook=window.addBook;dRec=window.dRec;saveDaily=window.saveDaily;bind=window.bind;petDetail=window.petDetail;
+
 })();
