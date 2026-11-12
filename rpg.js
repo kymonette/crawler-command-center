@@ -92,7 +92,7 @@
     const done=db.rpg.quests.filter(q=>!questActive(q));
     return panel('QUEST BOARD',active.map(questMarkup).join('')||'<p class="rpgmuted">No active quests. Suspiciously peaceful.</p>'+
       (done.length?'<details class="rpgitem"><summary>Completed this period ('+done.length+')</summary>'+done.map(questMarkup).join('')+'</details>':'' )+
-      '<form id="structuredQuestForm" class="rpgitem"><h3>REGISTER A QUEST</h3><label>Quest name</label><input name="name" required maxlength="100" placeholder="What needs doing?"><label>Quest type</label><select name="type"><option>Daily</option><option>Weekly</option><option>One-time</option></select><button class="btn gold">Add quest</button></form>','s12');
+      '<form id="structuredQuestForm" class="rpgitem"><h3>REGISTER A QUEST</h3><label>Quest name</label><input name="name" required maxlength="100" placeholder="What needs doing?"><label>Quest type</label><select name="type"><option>Daily</option><option>Weekly</option><option>One-time</option></select><button class="btn gold" type="submit">Add quest</button></form>','s12');
   }
   const previousHome=window.home;
   window.home=function(){
