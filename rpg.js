@@ -30,7 +30,7 @@
       ],
       bossWin:[
         'BOSS DOWN. Please enjoy your trophy. The System will be keeping the security footage.',
-        'THREAT ELIMINATED. That went better than the System's insurance department expected.',
+        "THREAT ELIMINATED. That went better than the System's insurance department expected.",
         'You survived a boss fight. Statistically inconvenient for your enemies.',
         'VICTORY REGISTERED. Try not to start believing your own hype.',
         'The boss has been handled. Cleanup on aisle YOU DID THAT.',
