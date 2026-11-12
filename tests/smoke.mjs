@@ -55,6 +55,20 @@ await page.evaluate(() => go('achievements'));
 assert.match(await page.locator('#view').innerText(), /Boss Problems/, 'first boss achievement should unlock');
 
 // Daily page: selected rest button, removed Other drinks field, currency inputs
+// Structured quests: recurring quest is created once, completed by period, and shown on dashboard.
+await page.locator('#structuredQuestForm input[name="name"]').fill('Wash dishes');
+await page.locator('#structuredQuestForm select[name="type"]').selectOption('Daily');
+await page.locator('#structuredQuestForm button[type="submit"]').click();
+assert.match(await page.locator('#view').innerText(), /Wash dishes/, 'daily quest should be created');
+await page.getByRole('button', { name: 'Complete quest' }).click();
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).rpg.quests[0].donePeriods.length), 1);
+await page.evaluate(() => go('home'));
+assert.match(await page.locator('#view').innerText(), /Wash dishes/, 'active quests should appear on dashboard');
+await page.evaluate(() => go('daily'));
+await page.locator('#dailyDate').fill('2026-11-05');
+await page.locator('textarea[name="notes"]').fill('Saved on selected date');
+await page.getByRole('button', { name: 'Save Daily Record' }).click();
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).daily['2026-11-05'].notes), 'Saved on selected date');
 await page.evaluate(() => go('daily'));
 const restButton = page.getByRole('button', { name: '7h' });
 await restButton.click();
@@ -63,6 +77,15 @@ assert.equal(await page.locator('input[name="otherDrinks"]').count(), 0, 'Other 
 assert.equal(await page.locator('input[name="moneyIn"]').getAttribute('type'), 'number', 'Gold gained should be numeric');
 assert.equal(await page.locator('input[name="moneyOut"]').getAttribute('type'), 'number', 'Gold spent should be numeric');
 
+// Add Book works and finished books no longer show page-tracking fields.
+await page.evaluate(() => go('reading'));
+await page.getByRole('button', { name: '+ Add a book' }).click();
+await page.locator('#bookForm input[name="name"]').fill('New Test Book');
+await page.locator('#bookForm button[type="submit"]').click();
+await page.getByText('New Test Book', { exact: true }).waitFor();
+const newBookIndex = await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).books.findIndex(b => b.name === 'New Test Book'));
+await page.locator('.bookcard').nth(newBookIndex).locator('select').selectOption('Finished');
+assert.equal(await page.locator('.bookcard').nth(newBookIndex).locator('input[type="number"]').count(), 0, 'finished book should hide page fields');
 // Pet detail should show one pet only, retain and edit symptom history
 await page.evaluate(() => go('dogs'));
 await page.evaluate(() => petDetail(0));
