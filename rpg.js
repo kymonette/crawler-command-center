@@ -99,17 +99,15 @@
     const daily=db.rpg.quests.filter(q=>q.type==='Daily');
     const active=daily.filter(questActive);
     const done=daily.length-active.length;
-    const body=active.length?active.map(questMarkup).join(''):'<p class="rpgmuted">No daily quests waiting. Either you are ahead of schedule or the System is hiding something.</p>';
-    const progress=daily.length?'<small class="rpgmuted">'+done+' / '+daily.length+' daily quests cleared today</small>':'';
-    return panel('TODAY\'S DAILY QUESTS',progress+body,'s12');
+    const tasks=(db.daily[dayKey()]?.todo||[]).filter(t=>!t.done);
+    const structured=active.map(questMarkup).join('');
+    const legacy=tasks.map(t=>'<div class="task"><input type="checkbox" onchange="toggleTask(\''+t.id+'\',this.checked)"><span>'+esc2(t.text)+'</span></div>').join('');
+    const progress=daily.length?'<small class="rpgmuted">'+done+' / '+daily.length+' structured daily quests cleared today</small>':'';
+    const body=structured+legacy;
+    return panel('TODAY\'S DAILY QUESTS',progress+(body||'<p class="rpgmuted">No daily quests waiting. Add one on the Daily Page quest board.</p>'),'s12');
   }
   const previousHome=window.home;
-  window.home=function(){
-    let out=previousHome();
-    const pos=out.indexOf('<div class="grid">');
-    if(pos>=0)out=out.slice(0,pos)+dashboardDailyPanel()+out.slice(pos);
-    return out;
-  };
+  window.home=function(){return dashboardDailyPanel()+previousHome()};
   const previousDaily=window.daily;
   window.daily=function(){
     let out=previousDaily();
