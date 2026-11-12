@@ -217,5 +217,7 @@
   };
   /* Keep the lexical function bindings used by the original single-file renderer aligned. */
   home=window.home;daily=window.daily;reading=window.reading;addBook=window.addBook;dRec=window.dRec;saveDaily=window.saveDaily;bind=window.bind;petDetail=window.petDetail;
+  /* Re-render after all late page overrides are installed so the first dashboard load includes today's quests. */
+  render();
 
 })();
