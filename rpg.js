@@ -17,7 +17,15 @@
     ['secret666','The Number Is Probably Fine','Accumulate 666 lifetime XP.','unique',()=>level().xp>=666,true]
   ];
   function level(){const xp=db.rpg.xpEvents.reduce((n,e)=>n+(+e.amount||0),0);return{xp,level:Math.floor(xp/250)+1,progress:xp%250}}
-  function log(msg,type){db.rpg.log.unshift({id:crypto.randomUUID(),date:new Date().toISOString(),msg,type});db.rpg.log=db.rpg.log.slice(0,300)}
+  function systemVoice(msg,type){
+    const text=String(msg||'');
+    if(text.startsWith('Achievement unlocked:'))return 'ACHIEVEMENT DETECTED. Try to look surprised, crawler. The System has prepared a very small amount of applause.';
+    if(type==='BOSS')return text.startsWith('BOSS DOWN:')?'THREAT NEUTRALIZED. Your survival has been noted. Do not let it become a personality.':'NEW THREAT REGISTERED. The System recommends confidence, preparation, and less screaming.';
+    if(type==='QUEST')return text.startsWith('Quest cleared:')?'OBJECTIVE COMPLETE. A rare display of follow-through. The System is almost moved.':'NEW OBJECTIVE RECEIVED. Add it to the pile. What could possibly go wrong?';
+    if(type==='XP')return 'EXPERIENCE ACQUIRED. Look at you, developing a measurable skill set.';
+    return 'ACTIVITY LOGGED. The System saw that. It sees most things. Unfortunately.';
+  }
+  function log(msg,type){db.rpg.log.unshift({id:crypto.randomUUID(),date:new Date().toISOString(),msg,type,broadcast:systemVoice(msg,type)});db.rpg.log=db.rpg.log.slice(0,300)}
   function award(id,amount,msg){if(db.rpg.xpEvents.some(e=>e.id===id))return;db.rpg.xpEvents.push({id,amount:Math.max(0,+amount||0),date:new Date().toISOString(),msg});log(msg+' · +'+amount+' XP','XP')}
   function check(){defs.forEach(a=>{if(!db.rpg.unlocks[a[0]]&&a[4]()){db.rpg.unlocks[a[0]]=new Date().toISOString();award('achievement:'+a[0],rarityXP[a[3]],'Achievement unlocked: '+a[1])}})}
   const oldBookStatus=window.setBookStatus,oldMarkCooked=window.markCooked;
@@ -27,7 +35,7 @@
   window.taskDone=function(id,v){const t=dRec().todo.find(x=>x.id===id);if(t){t.done=v;if(v)award('quest:'+id,10,'Daily quest completed: '+t.text)}save();check();render()};
   window.toggleTask=function(id,v){const t=db.daily[today()]?.todo?.find(x=>x.id===id);if(t){t.done=v;if(v)award('quest:'+id,10,'Daily quest completed: '+t.text)}save();check();render()};
   window.habitToggle=function(i,s){const h=db.habits[i];if(!h)return;h.done??=[];const had=h.done.includes(s);h.done=had?h.done.filter(x=>x!==s):[...h.done,s];if(!had){award('habit:'+i+':'+s,5,'Habit completed: '+h.name);if(db.habits.length&&db.habits.every(x=>(x.done||[]).includes(s)))award('allhabits:'+s,20,'All habits completed for the day')}save();check();render()};
-  const style=document.createElement('style');style.textContent=`:root{--bg:#070a12;--p:#10182a;--line:#284b66;--gold:#eaff00;--muted:#91a9bb;--ink:#e8f7ff;--cyan:#00eaff;--green:#b7ff00;--red:#ff3d9a}body{background:radial-gradient(ellipse at top,#111b32 0%,var(--bg) 58%);color:var(--ink);font-family:system-ui,sans-serif}h1,h2,h3,.eyebrow{letter-spacing:.08em;text-transform:uppercase}.panel,.module,.card{border-color:#254b65;box-shadow:0 0 0 1px #00eaff12,0 0 16px #00eaff0c;background:linear-gradient(145deg,#111a2b,#0b101d)}.btn,.module{border-color:#00eaff66}.btn.gold{color:#f5ff00;border-color:#eaff0088;box-shadow:0 0 12px #eaff0020}.module i{color:#00eaff;text-shadow:0 0 10px #00eaff}.modulegrid{grid-template-columns:repeat(2,minmax(0,1fr))}.rpgbar{height:9px;background:#090d1b;border:1px solid var(--line);margin:8px 0}.rpgbar span{display:block;height:100%;background:linear-gradient(90deg,#ff2aa6,#00eaff,#f5ff00);box-shadow:0 0 10px #00eaff66}.rpgitem{border:1px solid var(--line);padding:12px;margin:8px 0;background:#101326}.rpgmuted{color:var(--muted);font:11px system-ui}input,select,textarea{accent-color:#00eaff}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #eaff00;outline-offset:2px}`;document.head.append(style);
+  const style=document.createElement('style');style.textContent=`:root{--bg:#070a12;--p:#10182a;--line:#284b66;--gold:#eaff00;--muted:#91a9bb;--ink:#e8f7ff;--cyan:#00eaff;--green:#b7ff00;--red:#ff3d9a}body{background:radial-gradient(ellipse at top,#111b32 0%,var(--bg) 58%);color:var(--ink);font-family:system-ui,sans-serif}h1,h2,h3,.eyebrow{letter-spacing:.08em;text-transform:uppercase}.panel,.module,.card{border-color:#254b65;box-shadow:0 0 0 1px #00eaff12,0 0 16px #00eaff0c;background:linear-gradient(145deg,#111a2b,#0b101d)}.btn,.module{border-color:#00eaff66}.btn.gold{color:#f5ff00;border-color:#eaff0088;box-shadow:0 0 12px #eaff0020}.module i{color:#00eaff;text-shadow:0 0 10px #00eaff}.modulegrid{grid-template-columns:repeat(2,minmax(0,1fr))}.rpgbar{height:9px;background:#090d1b;border:1px solid var(--line);margin:8px 0}.rpgbar span{display:block;height:100%;background:linear-gradient(90deg,#ff2aa6,#00eaff,#f5ff00);box-shadow:0 0 10px #00eaff66}.system-announcer{border-color:#ff2aa6;box-shadow:0 0 18px #ff2aa622,inset 0 0 24px #ff2aa60b}.system-announcer-head{display:flex;align-items:center;gap:9px;color:#ff55bb;letter-spacing:.16em;font-size:12px}.system-announcer-head small{margin-left:auto;color:#00eaff;font-size:9px}.system-pulse{width:8px;height:8px;border-radius:50%;background:#ff2aa6;box-shadow:0 0 12px #ff2aa6}.system-announcer-message{font-size:15px;line-height:1.55;font-weight:650;color:var(--ink);margin:12px 0}.system-feed{border-top:1px solid #284b66;margin-top:10px;padding-top:5px}.system-feed-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;color:var(--muted);font-size:11px}.system-feed-row small{white-space:nowrap;color:#00eaff}.rpgitem{border:1px solid var(--line);padding:12px;margin:8px 0;background:#101326}.rpgmuted{color:var(--muted);font:11px system-ui}input,select,textarea{accent-color:#00eaff}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #eaff00;outline-offset:2px}`;document.head.append(style);
   const newPages=[['dungeon','⚔','Dungeon'],['trophies','♜','Trophy Room'],['achievements','✧','Achievement Gallery'],['systemLog','⌁','System Log'],['recaps','▣','Season Recap']];
   const nav=document.querySelector('.modulegrid');
   const oldHome=window.home;
@@ -95,6 +103,14 @@
     const addForm='<form id="structuredQuestForm" class="rpgitem"><h3>ADD ANOTHER QUEST</h3><label>Quest name</label><input name="name" required maxlength="100" placeholder="What needs doing?"><label>Quest type</label><select name="type"><option selected>Daily</option><option>Weekly</option><option>One-time</option></select><button class="btn gold" type="submit">＋ Add quest</button><small class="rpgmuted">Add as many as you need. The form stays here after each one.</small></form>';
     return panel('QUEST BOARD',activeList+completedList+addForm,'s12');
   }
+  function systemAnnouncerPanel(){
+    const events=db.rpg.log.slice(0,3);
+    const latest=events[0];
+    const fallback='THE SYSTEM IS WATCHING. Complete a quest, build a streak, defeat a boss, or unlock an achievement. It will have something to say about it.';
+    const latestText=latest?(latest.broadcast||systemVoice(latest.msg,latest.type)) : fallback;
+    const feed=events.slice(1).map(e=>'<div class="system-feed-row"><span>'+esc2(e.broadcast||systemVoice(e.msg,e.type))+'</span><small>'+new Date(e.date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</small></div>').join('');
+    return '<section class="panel s12 system-announcer"><div class="system-announcer-head"><span class="system-pulse"></span><b>THE SYSTEM</b><small>LIVE TRANSMISSION</small></div><p class="system-announcer-message">'+esc2(latestText)+'</p>'+(latest?'<small class="rpgmuted">'+esc2(latest.msg)+' · '+new Date(latest.date).toLocaleString()+'</small>':'')+(feed?'<div class="system-feed">'+feed+'</div>':'')+'</section>';
+  }
   function dashboardDailyPanel(){
     const daily=db.rpg.quests.filter(q=>q.type==='Daily');
     const active=daily.filter(questActive);
@@ -105,7 +121,7 @@
     return panel('TODAY\'S DAILY QUESTS',progress+(body||'<p class="rpgmuted">No daily quests waiting. Add one on the Daily Page quest board.</p>'),'s12');
   }
   const previousHome=window.home;
-  window.home=function(){return dashboardDailyPanel()+previousHome()};
+  window.home=function(){return systemAnnouncerPanel()+dashboardDailyPanel()+previousHome()};
   const previousDaily=window.daily;
   window.daily=function(){
     let out=previousDaily();
