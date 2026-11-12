@@ -100,7 +100,7 @@ assert.doesNotMatch(await page.locator('#view').innerText(), /Test Dog Two/, 'ot
 await page.getByRole('button', { name: 'Edit entry' }).click();
 assert.equal(await page.locator('#petSym0 textarea[name="notes"]').inputValue(), 'Original entry', 'existing symptom history must remain');
 await page.locator('#petEdit input[name="name"]').fill('Edited Test Dog');
-await page.locator('#petEdit button').last().click();
+await page.getByRole('button', { name: 'Save profile' }).click();
 assert.equal(await page.locator('#petEdit input[name="name"]').inputValue(), 'Edited Test Dog', 'pet profile edits should save');
 await page.locator('#petSym0 input[name="symptom"]').fill('Edited itching');
 await page.locator('#petSym0 button').first().click();
