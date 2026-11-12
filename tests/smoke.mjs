@@ -56,22 +56,51 @@ assert.match(await page.locator('#view').innerText(), /Boss Problems/, 'first bo
 
 // Daily page: selected rest button, removed Other drinks field, currency inputs
 await page.evaluate(() => go('daily'));
+// Structured quests: recurring quest is created once, completed by period, and shown on dashboard.
+await page.locator('#structuredQuestForm input[name="name"]').fill('Wash dishes');
+await page.locator('#structuredQuestForm select[name="type"]').selectOption('Daily');
+await page.locator('#structuredQuestForm button[type="submit"]').click();
+assert.match(await page.locator('#view').innerText(), /Wash dishes/, 'daily quest should be created');
+await page.evaluate(() => go('home'));
+assert.match(await page.locator('#view').innerText(), /Wash dishes/, 'active quests should appear on dashboard');
+await page.evaluate(() => go('daily'));
+await page.getByRole('button', { name: 'Complete quest' }).click();
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).rpg.quests[0].donePeriods.length), 1);
+await page.locator('#dailyDate').fill('2026-11-05');
+await page.locator('textarea[name="notes"]').fill('Saved on selected date');
+await page.getByRole('button', { name: 'Save Daily Record' }).click();
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).daily['2026-11-05'].notes), 'Saved on selected date');
+await page.evaluate(() => go('daily'));
 const restButton = page.getByRole('button', { name: '7h' });
 await restButton.click();
 assert.ok((await restButton.getAttribute('class')).includes('primary'), 'selected rest button should remain highlighted');
+assert.equal(await page.locator('input[name="sleep"]').count(), 0, 'sleep should be selected only with the hour buttons');
 assert.equal(await page.locator('input[name="otherDrinks"]').count(), 0, 'Other drinks field should be removed');
 assert.equal(await page.locator('input[name="moneyIn"]').getAttribute('type'), 'number', 'Gold gained should be numeric');
 assert.equal(await page.locator('input[name="moneyOut"]').getAttribute('type'), 'number', 'Gold spent should be numeric');
+assert.equal(await page.locator('text=Gold gained ($)').count(), 1, 'Gold gained label should appear once');
+assert.equal(await page.locator('text=Gold spent ($)').count(), 1, 'Gold spent label should appear once');
 
+// Add Book works and finished books no longer show page-tracking fields.
+await page.evaluate(() => go('reading'));
+await page.getByRole('button', { name: '+ Add a book' }).click();
+await page.locator('#bookForm input[name="name"]').fill('New Test Book');
+await page.locator('#bookForm button[type="submit"]').click();
+await page.getByText('New Test Book', { exact: true }).waitFor();
+const newBookIndex = await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).books.findIndex(b => b.name === 'New Test Book'));
+await page.locator('.bookcard').nth(newBookIndex).locator('select').selectOption('Finished');
+assert.equal(await page.locator('.bookcard').nth(newBookIndex).locator('input[type="number"]').count(), 0, 'finished book should hide page fields');
 // Pet detail should show one pet only, retain and edit symptom history
 await page.evaluate(() => go('dogs'));
 await page.evaluate(() => petDetail(0));
+await page.getByRole('button', { name: 'Edit profile' }).click();
 assert.equal(await page.locator('#petEdit input[name="name"]').inputValue(), 'Test Dog One');
 assert.equal(await page.locator('#view').locator('input[name="name"]').count(), 1, 'only the selected pet profile should be rendered');
 assert.doesNotMatch(await page.locator('#view').innerText(), /Test Dog Two/, 'other pet profiles must not appear in detail view');
+await page.getByRole('button', { name: 'Edit entry' }).click();
 assert.equal(await page.locator('#petSym0 textarea[name="notes"]').inputValue(), 'Original entry', 'existing symptom history must remain');
 await page.locator('#petEdit input[name="name"]').fill('Edited Test Dog');
-await page.locator('#petEdit button').last().click();
+await page.getByRole('button', { name: 'Save profile' }).click();
 assert.equal(await page.locator('#petEdit input[name="name"]').inputValue(), 'Edited Test Dog', 'pet profile edits should save');
 await page.locator('#petSym0 input[name="symptom"]').fill('Edited itching');
 await page.locator('#petSym0 button').first().click();
