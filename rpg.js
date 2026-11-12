@@ -104,10 +104,8 @@
   const previousDaily=window.daily;
   window.daily=function(){
     let out=previousDaily();
-    out=out.replace(/<div class="row">\$\{\[5,6,7,8,9,10\][\s\S]*?<\/div>\$\{field\('Hours of sleep',[\s\S]*?\)\}/,'
-})();');
-    out=out.replace(/\$\{field\('Hours of sleep','sleep',d\.sleep\|\|'','number'\)\}/,'');
-    out=out.replace(/\$\{panel\('QUEST LOG',[\s\S]*?,'s4'\)\}/, '${questPanel()}');
+    out=out.replace(/<label>Hours of sleep<\\/label><input[^>]*name="sleep"[^>]*>/,'');
+    out=out.replace(/<section class="panel s4"><h3>QUEST LOG<\\/h3>[\\s\\S]*?<\\/section>/,questPanel());
     return out;
   };
   /* Keep selected date stable and save to that exact date; never advance the page. */
