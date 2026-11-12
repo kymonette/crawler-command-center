@@ -175,13 +175,13 @@
     return '<section class="panel s12 system-announcer"><div class="system-announcer-head"><span class="system-pulse"></span><b>THE SYSTEM</b><small>LIVE TRANSMISSION</small></div><p class="system-announcer-message">'+esc2(latestText)+'</p>'+(latest?'<small class="rpgmuted">'+esc2(latest.msg)+' · '+new Date(latest.date).toLocaleString()+'</small>':'')+(feed?'<div class="system-feed">'+feed+'</div>':'')+'</section>';
   }
   function dashboardDailyPanel(){
-    const daily=db.rpg.quests.filter(q=>q.type==='Daily');
-    const active=daily.filter(questActive);
-    const done=daily.length-active.length;
+    const quests=db.rpg.quests||[];
+    const active=quests.filter(questActive);
+    const completed=quests.length-active.length;
     const structured=active.map(questMarkup).join('');
-    const progress=daily.length?'<small class="rpgmuted">'+done+' / '+daily.length+' structured daily quests cleared today</small>':'';
+    const progress=quests.length?'<small class="rpgmuted">'+active.length+' active · '+completed+' completed for their current period</small>':'';
     const body=structured;
-    return panel('TODAY\'S DAILY QUESTS',progress+(body||'<p class="rpgmuted">No daily quests waiting. Add one on the Daily Page quest board.</p>'),'s12');
+    return panel('ACTIVE QUESTS',progress+(body||'<p class="rpgmuted">No active quests. Suspiciously peaceful. Add one on the Daily Page quest board.</p>'),'s12');
   }
   const previousHome=window.home;
   window.home=function(){return systemAnnouncerPanel()+dashboardDailyPanel()+previousHome()};
