@@ -55,6 +55,7 @@ await page.evaluate(() => go('achievements'));
 assert.match(await page.locator('#view').innerText(), /Boss Problems/, 'first boss achievement should unlock');
 
 // Daily page: selected rest button, removed Other drinks field, currency inputs
+await page.evaluate(() => go('daily'));
 // Structured quests: recurring quest is created once, completed by period, and shown on dashboard.
 await page.locator('#structuredQuestForm input[name="name"]').fill('Wash dishes');
 await page.locator('#structuredQuestForm select[name="type"]').selectOption('Daily');
@@ -65,7 +66,6 @@ assert.match(await page.locator('#view').innerText(), /Wash dishes/, 'active que
 await page.evaluate(() => go('daily'));
 await page.getByRole('button', { name: 'Complete quest' }).click();
 assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).rpg.quests[0].donePeriods.length), 1);
-await page.evaluate(() => go('home'));
 await page.locator('#dailyDate').fill('2026-11-05');
 await page.locator('textarea[name="notes"]').fill('Saved on selected date');
 await page.getByRole('button', { name: 'Save Daily Record' }).click();
@@ -74,9 +74,12 @@ await page.evaluate(() => go('daily'));
 const restButton = page.getByRole('button', { name: '7h' });
 await restButton.click();
 assert.ok((await restButton.getAttribute('class')).includes('primary'), 'selected rest button should remain highlighted');
+assert.equal(await page.locator('input[name="sleep"]').count(), 0, 'sleep should be selected only with the hour buttons');
 assert.equal(await page.locator('input[name="otherDrinks"]').count(), 0, 'Other drinks field should be removed');
 assert.equal(await page.locator('input[name="moneyIn"]').getAttribute('type'), 'number', 'Gold gained should be numeric');
 assert.equal(await page.locator('input[name="moneyOut"]').getAttribute('type'), 'number', 'Gold spent should be numeric');
+assert.equal(await page.locator('text=Gold gained ($)').count(), 1, 'Gold gained label should appear once');
+assert.equal(await page.locator('text=Gold spent ($)').count(), 1, 'Gold spent label should appear once');
 
 // Add Book works and finished books no longer show page-tracking fields.
 await page.evaluate(() => go('reading'));
