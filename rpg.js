@@ -105,7 +105,8 @@
   window.daily=function(){
     let out=previousDaily();
     out=out.replace(/<label>Hours of sleep<\/label><input[^>]*name="sleep"[^>]*>/,'');
-    out=out.replace(/<section class="panel s4"><h3>QUEST LOG<\/h3>[\s\S]*?<\/section>/,questPanel());
+    const qHead=out.indexOf('<h3>QUEST LOG</h3>');
+    if(qHead>=0){const qStart=out.lastIndexOf('<section',qHead),qEnd=out.indexOf('</section>',qHead)+10;if(qStart>=0&&qEnd>qStart)out=out.slice(0,qStart)+questPanel()+out.slice(qEnd);}
     return out;
   };
   /* Keep selected date stable and save to that exact date; never advance the page. */
