@@ -165,7 +165,7 @@
   function questActive(q){return !(q.donePeriods||[]).includes(questPeriod(q))}
   function questMarkup(q){
     const done=!questActive(q);
-    return '<div class="rpgitem quest-row"><div class="row between"><b>'+esc2(q.name)+'</b><span class="tag">'+esc2(q.type)+'</span></div><div class="row between"><small class="rpgmuted">'+(done?'COMPLETED TODAY':'ACTIVE QUEST')+'</small><div class="row"><button class="btn '+(done?'':'gold')+'" '+(done?'disabled':'onclick="rpgQuestComplete(\\''+q.id+'\\')"')+'>'+(done?'✓ Complete':'Complete quest')+'</button><button class="btn danger" type="button" onclick="rpgQuestDelete(\\''+q.id+'\\')">Delete</button></div></div></div>';
+    return '<div class="rpgitem quest-row"><div class="row between"><b>'+esc2(q.name)+'</b><span class="tag">'+esc2(q.type)+'</span></div><div class="row between"><small class="rpgmuted">'+(done?'COMPLETED TODAY':'ACTIVE QUEST')+'</small><div class="row"><button class="btn '+(done?'':'gold')+'" '+(done?'disabled':'onclick="rpgQuestComplete(\''+q.id+'\')"')+'>'+(done?'✓ Complete':'Complete quest')+'</button><button class="btn danger" type="button" onclick="rpgQuestDelete(\''+q.id+'\')">Delete</button></div></div></div>';
   }
   window.rpgQuestDelete=function(id){
     const q=db.rpg.quests.find(x=>x.id===id);if(!q)return;

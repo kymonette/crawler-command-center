@@ -1,10 +1,16 @@
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+// Fail early with an exact filename/line/column if the RPG layer cannot parse.
+new vm.Script(readFileSync('rpg.js', 'utf8'), { filename: 'rpg.js' });
+
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 const errors = [];
-page.on('pageerror', error => errors.push(error.message));
+page.on('pageerror', error => errors.push({message:error.message,stack:error.stack}));
+page.on('console', msg => { if(msg.type()==='error') errors.push({message:msg.text(),stack:'console'}); });
 
 const seed = {
   daily: {
@@ -24,9 +30,13 @@ const seed = {
 await page.addInitScript(data => localStorage.setItem('crawler-command-center', JSON.stringify(data)), seed);
 await page.goto('http://127.0.0.1:4173', { waitUntil: 'load' });
 await page.waitForSelector('#view');
+await page.waitForFunction(() => document.querySelector('#nav')?.getAttribute('aria-hidden') === 'true');
 
+console.log('PAGE ERRORS:', errors);
 assert.equal(await page.locator('#nav').isVisible(), false, 'top navigation should be hidden');
 assert.match(await page.locator('#view').innerText(), /Dungeon/i, 'dashboard should include Dungeon tile');
+assert.match(await page.locator('#view').innerText(), /THE SYSTEM/i, 'dashboard should include the System announcer');
+assert.match(await page.locator('#view').innerText(), /ACTIVE QUESTS/i, 'dashboard should include the active quest panel');
 
 // Neighborhood boss, objective completion, defeat, trophy and XP
 await page.evaluate(() => go('dungeon'));
@@ -98,11 +108,12 @@ await page.getByRole('button', { name: 'Edit profile' }).click();
 assert.equal(await page.locator('#petEdit input[name="name"]').inputValue(), 'Test Dog One');
 assert.equal(await page.locator('#view').locator('input[name="name"]').count(), 1, 'only the selected pet profile should be rendered');
 assert.doesNotMatch(await page.locator('#view').innerText(), /Test Dog Two/, 'other pet profiles must not appear in detail view');
-await page.getByRole('button', { name: 'Edit entry' }).click();
-assert.equal(await page.locator('#petSym0 textarea[name="notes"]').inputValue(), 'Original entry', 'existing symptom history must remain');
 await page.locator('#petEdit input[name="name"]').fill('Edited Test Dog');
 await page.getByRole('button', { name: 'Save profile' }).click();
 assert.equal(await page.locator('#petEdit input[name="name"]').inputValue(), 'Edited Test Dog', 'pet profile edits should save');
+assert.equal(await page.locator('#petSym0 textarea[name="notes"]').inputValue(), 'Original entry', 'existing symptom history must remain');
+await page.evaluate(() => editPetSymptom(0, 0));
+await page.locator('#petSym0').waitFor({ state: 'visible' });
 await page.locator('#petSym0 input[name="symptom"]').fill('Edited itching');
 await page.locator('#petSym0 button').first().click();
 assert.equal(await page.locator('#petSym0 input[name="symptom"]').inputValue(), 'Edited itching', 'symptom entries should be editable and saved');
