@@ -5,6 +5,7 @@ const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 const errors = [];
 page.on('pageerror', error => errors.push({message:error.message,stack:error.stack}));
+page.on('console', msg => { if(msg.type()==='error') errors.push({message:msg.text(),stack:'console'}); });
 
 const seed = {
   daily: {
