@@ -26,6 +26,7 @@ await page.goto('http://127.0.0.1:4173', { waitUntil: 'load' });
 await page.waitForSelector('#view');
 await page.waitForFunction(() => document.querySelector('#nav')?.getAttribute('aria-hidden') === 'true');
 
+console.log('PAGE ERRORS:', errors);
 assert.equal(await page.locator('#nav').isVisible(), false, 'top navigation should be hidden');
 assert.match(await page.locator('#view').innerText(), /Dungeon/i, 'dashboard should include Dungeon tile');
 assert.match(await page.locator('#view').innerText(), /THE SYSTEM/i, 'dashboard should include the System announcer');
