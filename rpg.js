@@ -313,6 +313,19 @@
   };
   /* Keep the lexical function bindings used by the original single-file renderer aligned. */
   home=window.home;daily=window.daily;reading=window.reading;addBook=window.addBook;dRec=window.dRec;saveDaily=window.saveDaily;bind=window.bind;petDetail=window.petDetail;
+  /* Final dashboard/nav guard: keep legacy tab navigation hidden and render current daily quests. */
+  const navGuard=$id('nav');
+  if(navGuard){navGuard.style.setProperty('display','none','important');navGuard.setAttribute('aria-hidden','true');}
+  const priorFinalHome=window.home;
+  window.home=function(){
+    const questsPanel=dashboardDailyPanel();
+    const systemPanel=systemAnnouncerPanel();
+    const progressionAndTiles=priorFinalHome();
+    return systemPanel+questsPanel+progressionAndTiles;
+  };
+  home=window.home;
+  /* Re-apply the nav rule after all page wrappers have been installed. */
+  if(navGuard)navGuard.style.setProperty('display','none','important');
   /* Re-render after all late page overrides are installed so the first dashboard load includes today's quests. */
   render();
 
