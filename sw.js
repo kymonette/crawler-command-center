@@ -1,5 +1,5 @@
-const CACHE = "crawler-command-center-v23";
-const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.png", "./rpg.js"];
+const CACHE = "hyrule-command-center-v1";
+const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./icon.svg"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
