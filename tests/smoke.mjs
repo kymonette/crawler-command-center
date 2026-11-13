@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 const errors = [];
-page.on('pageerror', error => errors.push(error.message));
+page.on('pageerror', error => errors.push({message:error.message,stack:error.stack}));
 
 const seed = {
   daily: {
