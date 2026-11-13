@@ -1,5 +1,5 @@
-const CACHE = "hyrule-command-center-v1";
-const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./icon.svg", "./hyrule.js"];
+const CACHE = "hyrule-command-center-v2";
+const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./hyrule.js"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -23,7 +23,7 @@ self.addEventListener("fetch", event => {
   const url = new URL(event.request.url);
   const isAppShell = event.request.mode === "navigate" ||
     url.pathname.endsWith("/index.html") ||
-    url.pathname.endsWith("/rpg.js");
+    url.pathname.endsWith("/rpg.js") || url.pathname.endsWith("/hyrule.js");
 
   if (isAppShell) {
     event.respondWith(
