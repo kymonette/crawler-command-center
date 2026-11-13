@@ -24,9 +24,12 @@ const seed = {
 await page.addInitScript(data => localStorage.setItem('crawler-command-center', JSON.stringify(data)), seed);
 await page.goto('http://127.0.0.1:4173', { waitUntil: 'load' });
 await page.waitForSelector('#view');
+await page.waitForFunction(() => document.querySelector('#nav')?.getAttribute('aria-hidden') === 'true');
 
 assert.equal(await page.locator('#nav').isVisible(), false, 'top navigation should be hidden');
 assert.match(await page.locator('#view').innerText(), /Dungeon/i, 'dashboard should include Dungeon tile');
+assert.match(await page.locator('#view').innerText(), /THE SYSTEM/i, 'dashboard should include the System announcer');
+assert.match(await page.locator('#view').innerText(), /ACTIVE QUESTS/i, 'dashboard should include the active quest panel');
 
 // Neighborhood boss, objective completion, defeat, trophy and XP
 await page.evaluate(() => go('dungeon'));
