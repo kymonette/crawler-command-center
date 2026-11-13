@@ -316,13 +316,7 @@
   /* Final dashboard/nav guard: keep legacy tab navigation hidden and render current daily quests. */
   const navGuard=$id('nav');
   if(navGuard){navGuard.style.setProperty('display','none','important');navGuard.setAttribute('aria-hidden','true');}
-  const priorFinalHome=window.home;
-  window.home=function(){
-    const questsPanel=dashboardDailyPanel();
-    const systemPanel=systemAnnouncerPanel();
-    const progressionAndTiles=priorFinalHome();
-    return systemPanel+questsPanel+progressionAndTiles;
-  };
+  /* The earlier home wrapper already adds THE SYSTEM and ACTIVE QUESTS. Do not add them twice. */
   home=window.home;
   /* Re-apply the nav rule after all page wrappers have been installed. */
   if(navGuard)navGuard.style.setProperty('display','none','important');
