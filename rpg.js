@@ -140,6 +140,8 @@
 
   /* Play-test usability fixes: structured quests, compact editing, stable daily date. */
   db.rpg.quests??=[];
+  /* All quests are daily: normalize older Weekly/One-time entries without deleting their history. */
+  db.rpg.quests.forEach(q=>{q.type='Daily';q.donePeriods??=[];});
   const dayKey=()=>today();
   function weekKey(date=dayKey()){
     const d=new Date(date+'T12:00:00');const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);
@@ -163,7 +165,7 @@
     const done=db.rpg.quests.filter(q=>!questActive(q));
     const activeList=active.length?active.map(questMarkup).join(''):'<p class="rpgmuted">No active quests. Suspiciously peaceful.</p>';
     const completedList=done.length?'<details class="rpgitem"><summary>Completed this period ('+done.length+')</summary>'+done.map(questMarkup).join('')+'</details>':'';
-    const addForm='<form id="structuredQuestForm" class="rpgitem"><h3>ADD ANOTHER QUEST</h3><label>Quest name</label><input name="name" required maxlength="100" placeholder="What needs doing?"><label>Quest type</label><select name="type"><option selected>Daily</option><option>Weekly</option><option>One-time</option></select><button class="btn gold" type="submit">＋ Add quest</button><small class="rpgmuted">Add as many as you need. The form stays here after each one.</small></form>';
+    const addForm='<form id="structuredQuestForm" class="rpgitem"><h3>ADD ANOTHER QUEST</h3><label>Quest name</label><input name="name" required maxlength="100" placeholder="What needs doing?"><input type="hidden" name="type" value="Daily"><small class="rpgmuted">Every quest resets daily.</small><button class="btn gold" type="submit">＋ Add quest</button><small class="rpgmuted">Add as many as you need. The form stays here after each one.</small></form>';
     return panel('QUEST BOARD',activeList+completedList+addForm,'s12');
   }
   function systemAnnouncerPanel(){
