@@ -1,3 +1,8 @@
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+// Fail early with an exact filename/line/column if the RPG layer cannot parse.
+new vm.Script(readFileSync('rpg.js', 'utf8'), { filename: 'rpg.js' });
+
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 
