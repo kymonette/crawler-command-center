@@ -58,7 +58,8 @@ assert.match(await page.locator('#view').innerText(), /Boss Problems/, 'first bo
 await page.evaluate(() => go('daily'));
 // Structured quests: recurring quest is created once, completed by period, and shown on dashboard.
 await page.locator('#structuredQuestForm input[name="name"]').fill('Wash dishes');
-await page.locator('#structuredQuestForm select[name="type"]').selectOption('Daily');
+assert.equal(await page.locator('#structuredQuestForm input[name="type"]').inputValue(), 'Daily', 'all new quests must be daily');
+assert.equal(await page.locator('#structuredQuestForm select[name="type"]').count(), 0, 'quest type selector must be removed');
 await page.locator('#structuredQuestForm button[type="submit"]').click();
 assert.match(await page.locator('#view').innerText(), /Wash dishes/, 'daily quest should be created');
 await page.evaluate(() => go('home'));
