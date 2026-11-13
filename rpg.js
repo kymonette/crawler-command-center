@@ -49,7 +49,21 @@
         'Quest cleared. You may now enjoy the rare sensation of having actually finished something.',
         'TASK VERIFIED. The bar was low, yet you have cleared it with style.',
         'One less thing lurking on your to-do list. The System approves of this development.',
-        'You did the thing. The System checked twice because it was genuinely surprised.',
+        'The objective has been completed. The System is contractually obligated to acknowledge your competence.',
+        'Quest cleared. Please report to the nearest exit before another responsibility spawns.',
+        'A task has left the queue. The System is calling this a rare administrative victory.',
+        'Completion confirmed. Your reward is satisfaction and the terrifying possibility of free time.',
+        'You have defeated the dreaded Task. Its loot drop was one less thing to worry about.',
+        'The checklist has suffered a devastating defeat. Analysts are calling it unprecedented.',
+        'That objective is finished. The System has updated your status to “occasionally reliable.”',
+        'One less loose end. Somewhere, your future self just unclenched.',
+        'QUEST COMPLETE. A tiny parade has been denied a permit, but the applause is real.',
+        'You followed through. The System is trying to act normal about this development.',
+        'The task is done. No dramatic speech necessary. The evidence speaks for itself.',
+        'Another objective bites the dust. Your to-do list is learning fear.',
+        'Success recorded. The System has reluctantly moved you out of the “needs supervision” column.',
+        'You made the thing happen instead of merely thinking about making the thing happen. Remarkable.',
+        'Objective eliminated. Please enjoy this brief window before reality assigns a sequel.',
         'QUEST COMPLETE. Please accept this imaginary fanfare and get on with your day.'
       ],
       questNew:[
@@ -83,7 +97,7 @@
     else if(type==='QUEST')key=text.startsWith('Quest cleared:')?'questDone':'questNew';
     else if(type==='XP')key='xp';
     const choices=pools[key];
-    const recent=(db.rpg.log||[]).slice(0,3).map(e=>e.broadcast).filter(Boolean);
+    const recent=(db.rpg.log||[]).slice(0,6).map(e=>e.broadcast).filter(Boolean);
     const fresh=choices.filter(line=>!recent.includes(line));
     const options=fresh.length?fresh:choices.filter(line=>line!==recent[0]);
     return options[Math.floor(Math.random()*options.length)]||choices[0];
@@ -151,8 +165,13 @@
   function questActive(q){return !(q.donePeriods||[]).includes(questPeriod(q))}
   function questMarkup(q){
     const done=!questActive(q);
-    return '<div class="rpgitem quest-row"><div class="row between"><b>'+esc2(q.name)+'</b><span class="tag">'+esc2(q.type)+'</span></div><div class="row between"><small class="rpgmuted">'+(done?'COMPLETED THIS '+(q.type==='One-time'?'RUN':q.type.toUpperCase()):'ACTIVE QUEST')+'</small><button class="btn '+(done?'':'gold')+'" '+(done?'disabled':'onclick="rpgQuestComplete(\''+q.id+'\')"')+'>'+(done?'✓ Complete':'Complete quest')+'</button></div></div>';
+    return '<div class="rpgitem quest-row"><div class="row between"><b>'+esc2(q.name)+'</b><span class="tag">'+esc2(q.type)+'</span></div><div class="row between"><small class="rpgmuted">'+(done?'COMPLETED TODAY':'ACTIVE QUEST')+'</small><div class="row"><button class="btn '+(done?'':'gold')+'" '+(done?'disabled':'onclick="rpgQuestComplete(\\''+q.id+'\\')"')+'>'+(done?'✓ Complete':'Complete quest')+'</button><button class="btn danger" type="button" onclick="rpgQuestDelete(\\''+q.id+'\\')">Delete</button></div></div></div>';
   }
+  window.rpgQuestDelete=function(id){
+    const q=db.rpg.quests.find(x=>x.id===id);if(!q)return;
+    if(!confirm('Delete quest "'+q.name+'"? This cannot be undone.'))return;
+    db.rpg.quests=db.rpg.quests.filter(x=>x.id!==id);save();render();
+  };
   window.rpgQuestComplete=function(id){
     const q=db.rpg.quests.find(x=>x.id===id);if(!q||!questActive(q))return;
     q.donePeriods??=[];const period=questPeriod(q);q.donePeriods.push(period);
