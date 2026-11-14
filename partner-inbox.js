@@ -287,6 +287,7 @@
         });
       }
     }
+    try { if (typeof page !== "undefined" && page === "home") document.body.dataset.page = "home"; } catch (_) {}
     if (document.getElementById("view") && document.body.dataset.page === "home") {
       try { window.render(); } catch (_) {}
     }
