@@ -37,6 +37,7 @@ assert.equal(await page.locator('#nav').isVisible(), false, 'top navigation shou
 assert.match(await page.locator('#view').innerText(), /Dungeon/i, 'dashboard should include Dungeon tile');
 assert.match(await page.locator('#view').innerText(), /THE SYSTEM/i, 'dashboard should include the System announcer');
 assert.match(await page.locator('#view').innerText(), /ACTIVE QUESTS/i, 'dashboard should include the active quest panel');
+assert.match(await page.locator('#view').innerText(), /STATUS EFFECTS/i, 'dashboard should include the wellness tile');
 
 // Neighborhood boss, objective completion, defeat, trophy and XP
 await page.evaluate(() => go('dungeon'));
@@ -120,6 +121,32 @@ assert.equal(await page.locator('#petSym0 input[name="symptom"]').inputValue(), 
 const savedPet = await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).dogs[0]);
 assert.equal(savedPet.name, 'Edited Test Dog');
 assert.equal(savedPet.symptoms[0].symptom, 'Edited itching');
+
+// Status Effect Registry: add, edit and delete personal wellness records.
+await page.evaluate(() => go('wellness'));
+assert.match(await page.locator('#view').innerText(), /STATUS EFFECT REGISTRY/);
+await page.locator('#wellnessForm input[name="symptom"]').fill('Test headache');
+await page.locator('#wellnessForm select[name="severity"]').selectOption('Moderate');
+await page.locator('#wellnessForm select[name="mood"]').selectOption('Low');
+await page.locator('#wellnessForm select[name="energy"]').selectOption('2');
+await page.locator('#wellnessForm input[name="sleep"]').fill('6.5');
+await page.locator('#wellnessForm input[name="triggers"]').fill('Smoke test trigger');
+await page.locator('#wellnessForm textarea[name="notes"]').fill('Original wellness note');
+await page.locator('#wellnessForm button[type="submit"]').click();
+assert.match(await page.locator('#view').innerText(), /Test headache/);
+let wellnessData = await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).wellness);
+assert.equal(wellnessData.length, 1);
+assert.equal(wellnessData[0].sleep, '6.5');
+await page.locator('.wellness-entry summary').click();
+await page.locator('.wellness-edit input[name="symptom"]').fill('Edited headache');
+await page.locator('.wellness-edit button[type="submit"]').click();
+wellnessData = await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).wellness);
+assert.equal(wellnessData[0].symptom, 'Edited headache', 'wellness entries should be editable');
+await page.locator('.wellness-entry summary').click();
+page.once('dialog', dialog => dialog.accept());
+await page.locator('.wellness-entry button.danger').click();
+wellnessData = await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).wellness);
+assert.equal(wellnessData.length, 0, 'wellness entries should be deletable');
 
 // Stats should contain visual progress bars; settings remains reachable
 await page.evaluate(() => go('stats'));
