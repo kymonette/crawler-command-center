@@ -131,11 +131,40 @@
         <section class="partner-hero"><h2>${title}</h2><p>${subtitle}</p><div class="partner-actions"><span class="partner-small">Signed in as ${esc(state.user.email)}</span><button class="btn" onclick="window.partnerInboxRefresh()">↻ Refresh</button><button class="btn" onclick="window.partnerInboxSignOut()">Sign out</button></div></section>
         <div id="partnerInboxNotice" class="partner-status" ${state.error ? "" : "style=\"display:none\""}>${esc(state.error || state.note)}</div>
         <section class="partner-compose">
-          <h3>Send something</h3>
+          <h3>A little check-in 💛</h3>
+          <p class="partner-small">A small way to let each other in. Honest answers are welcome; there's no wrong answer.</p>
           <form onsubmit="window.partnerInboxSend(event)">
-            <label for="partnerInboxType">Message type</label><select id="partnerInboxType">${typeOptions}</select>
-            <label for="partnerInboxBody">Your message</label><textarea id="partnerInboxBody" maxlength="5000" placeholder="Write something kind, honest, or important…" required></textarea>
-            <div class="partner-actions"><button class="btn gold" type="submit" ${state.loading ? "disabled" : ""}>Send message</button></div>
+            <label for="partnerInboxFeeling">How are you feeling today?</label>
+            <select id="partnerInboxFeeling" required>
+              <option value="">Choose what fits best…</option>
+              <option>Pretty good — feeling connected</option>
+              <option>Okay, just taking the day as it comes</option>
+              <option>Stressed or overwhelmed</option>
+              <option>Sad or a little low</option>
+              <option>Anxious or unsettled</option>
+              <option>Tired and needing some quiet</option>
+              <option>Disconnected and could use closeness</option>
+              <option>Not sure yet</option>
+            </select>
+            <label for="partnerInboxNeed">What do you need from me today?</label>
+            <select id="partnerInboxNeed" required>
+              <option value="">Choose what would help…</option>
+              <option>A little reassurance</option>
+              <option>Affection or a reminder that we're okay</option>
+              <option>Someone to listen — no fixing</option>
+              <option>Practical help or a hand with something</option>
+              <option>Quality time and attention</option>
+              <option>Patience and a little extra understanding</option>
+              <option>Space, but still knowing we're connected</option>
+              <option>Help figuring out what I need</option>
+              <option>Nothing specific — just wanted to check in</option>
+            </select>
+            <label for="partnerInboxAppreciation">One thing I appreciate about you today (optional)</label>
+            <input id="partnerInboxAppreciation" maxlength="240" placeholder="Something you did, a little thing, or just you…">
+            <label for="partnerInboxBody">Anything else on my heart? (optional)</label>
+            <textarea id="partnerInboxBody" maxlength="3000" placeholder="Tell me more, send a love note, or just say what's on your mind…"></textarea>
+            <input type="hidden" id="partnerInboxType" value="check_in">
+            <div class="partner-actions"><button class="btn gold" type="submit" ${state.loading ? "disabled" : ""}>Send my check-in 💌</button></div>
           </form>
         </section>
         <section class="partner-compose"><div class="row between"><h3>Shared conversation</h3><span class="partner-small">${state.messages.length} messages</span></div>
@@ -211,9 +240,18 @@
 
   window.partnerInboxSend = async function (event) {
     event.preventDefault();
-    const body = document.getElementById("partnerInboxBody")?.value.trim();
-    const message_type = document.getElementById("partnerInboxType")?.value || "message";
-    if (!body || !state.user) return;
+    const feeling = document.getElementById("partnerInboxFeeling")?.value || "";
+    const need = document.getElementById("partnerInboxNeed")?.value || "";
+    const appreciation = document.getElementById("partnerInboxAppreciation")?.value.trim() || "";
+    const note = document.getElementById("partnerInboxBody")?.value.trim() || "";
+    const message_type = document.getElementById("partnerInboxType")?.value || "check_in";
+    if (!feeling || !need || !state.user) return;
+    const body = [
+      "HOW I'M FEELING: " + feeling,
+      "WHAT I NEED FROM YOU: " + need,
+      appreciation ? "SOMETHING I APPRECIATE: " + appreciation : "",
+      note ? "A NOTE FROM ME: " + note : ""
+    ].filter(Boolean).join("\\n\\n");
     const client = getClient();
     try {
       const { error } = await client.from("partner_messages").insert({
@@ -221,7 +259,10 @@
       });
       if (error) throw error;
       document.getElementById("partnerInboxBody").value = "";
-      state.note = "Message sent.";
+      document.getElementById("partnerInboxFeeling").value = "";
+      document.getElementById("partnerInboxNeed").value = "";
+      document.getElementById("partnerInboxAppreciation").value = "";
+      state.note = "Your check-in has been sent. 💛";
       state.error = "";
       await loadMessages();
       window.render();
