@@ -67,7 +67,7 @@ assert.match(await page.locator('#view').innerText(), /Boss Problems/, 'first bo
 
 // Daily page: selected rest button, removed Other drinks field, currency inputs
 await page.evaluate(() => go('daily'));
-// Structured quests: recurring quest is created once, completed by period, and shown on dashboard.
+// Daily quests are one-time daily to-dos, not recurring tasks.
 await page.locator('#structuredQuestForm input[name="name"]').fill('Wash dishes');
 assert.equal(await page.locator('#structuredQuestForm input[name="type"]').inputValue(), 'Daily', 'all new quests must be daily');
 assert.equal(await page.locator('#structuredQuestForm select[name="type"]').count(), 0, 'quest type selector must be removed');
@@ -77,7 +77,10 @@ await page.evaluate(() => go('home'));
 assert.match(await page.locator('#view').innerText(), /Wash dishes/, 'active quests should appear on dashboard');
 await page.evaluate(() => go('daily'));
 await page.getByRole('button', { name: 'Complete quest' }).click();
-assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).rpg.quests[0].donePeriods.length), 1);
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).rpg.quests[0].completed), true, 'quest should be permanently completed');
+await page.evaluate(() => go('home'));
+assert.equal(await page.locator('#view .quest-row').count(), 0, 'completed one-time quest must not reappear in the active dashboard list');
+await page.evaluate(() => go('daily'));
 await page.locator('#dailyDate').fill('2026-11-05');
 await page.locator('textarea[name="notes"]').fill('Saved on selected date');
 await page.getByRole('button', { name: 'Save Daily Record' }).click();
@@ -92,6 +95,12 @@ assert.equal(await page.locator('input[name="moneyIn"]').getAttribute('type'), '
 assert.equal(await page.locator('input[name="moneyOut"]').getAttribute('type'), 'number', 'Gold spent should be numeric');
 assert.equal(await page.locator('text=Gold gained ($)').count(), 1, 'Gold gained label should appear once');
 assert.equal(await page.locator('text=Gold spent ($)').count(), 1, 'Gold spent label should appear once');
+assert.equal(await page.locator('#view .money-field').count(), 2, 'both daily gold fields should display a dollar prefix');
+assert.equal(await page.locator('input[name="moneyIn"]').getAttribute('step'), '0.01');
+await page.evaluate(() => go('budget'));
+assert.equal(await page.locator('#view .money-field').count(), 3, 'income, expense and bill amounts should display dollar prefixes');
+assert.equal(await page.locator('#view input[name="amount"]').count(), 3);
+assert.equal(await page.locator('#view input[name="amount"]').first().getAttribute('step'), '0.01');
 
 // Add Book works and finished books no longer show page-tracking fields.
 await page.evaluate(() => go('reading'));
