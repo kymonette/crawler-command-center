@@ -145,7 +145,7 @@
       </div>`;
   }
 
-  async function loadMessages() {
+  async function loadMessages(markRead = false) {
     const client = getClient();
     if (!client || !state.user) return;
     state.loading = true;
@@ -158,7 +158,11 @@
       state.messages = data || [];
       const lastRead = localStorage.getItem(lastReadKey()) || "1970-01-01T00:00:00.000Z";
       state.unread = state.messages.filter(m => m.sender_id !== state.user.id && new Date(m.created_at) > new Date(lastRead)).length;
-      localStorage.setItem(lastReadKey(), new Date().toISOString());
+      if (markRead) {
+        const newest = state.messages[state.messages.length - 1]?.created_at || new Date().toISOString();
+        localStorage.setItem(lastReadKey(), newest);
+        state.unread = 0;
+      }
       state.error = "";
     } catch (e) {
       state.error = e?.message || "Could not load messages.";
@@ -235,29 +239,7 @@
 
   window.partnerInboxPage = function () {
     styles();
-    if (!initialized) {
-      initialized = true;
-      const client = getClient();
-      if (client) {
-        client.auth.getSession().then(({ data }) => {
-          state.user = data?.session?.user || null;
-          if (state.user) loadMessages().then(() => {
-            if (document.body.dataset.page === "partnerInbox") window.render();
-          });
-          else if (document.body.dataset.page === "partnerInbox") window.render();
-        });
-        client.auth.onAuthStateChange((_event, session) => {
-          state.user = session?.user || null;
-          if (state.user) loadMessages().then(() => {
-            if (document.body.dataset.page === "partnerInbox") window.render();
-          });
-          else {
-            state.messages = [];
-            if (document.body.dataset.page === "partnerInbox") window.render();
-          }
-        });
-      }
-    }
+    if (state.user) loadMessages(true);
     return pageHtml();
   };
 
@@ -277,6 +259,22 @@
       pages.push(["partnerInbox", "✉", "Partner Inbox"]);
     }
     addTileToHome();
+    if (!initialized) {
+      initialized = true;
+      const client = getClient();
+      if (client) {
+        client.auth.getSession().then(({ data }) => {
+          state.user = data?.session?.user || null;
+          if (state.user) loadMessages(false);
+        });
+        client.auth.onAuthStateChange((_event, session) => {
+          state.user = session?.user || null;
+          if (state.user) loadMessages(document.body.dataset.page === "partnerInbox");
+          else { state.messages = []; state.unread = 0; updateTileBadge(); }
+          if (document.body.dataset.page === "partnerInbox" && typeof window.render === "function") window.render();
+        });
+      }
+    }
     if (document.getElementById("view") && document.body.dataset.page === "home") {
       try { window.render(); } catch (_) {}
     }
