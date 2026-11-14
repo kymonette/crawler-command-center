@@ -313,7 +313,60 @@
   };
   /* Keep the lexical function bindings used by the original single-file renderer aligned. */
   home=window.home;daily=window.daily;reading=window.reading;addBook=window.addBook;dRec=window.dRec;saveDaily=window.saveDaily;bind=window.bind;petDetail=window.petDetail;
-  /* Final dashboard/nav guard: keep legacy tab navigation hidden and render current daily quests. */
+
+  /* STATUS EFFECT REGISTRY — private, on-device symptom and wellness journal. */
+  db.wellness=Array.isArray(db.wellness)?db.wellness:[];
+  if(!pages.some(p=>p[0]==='wellness'))pages.push(['wellness','✚','Status Effect Registry']);
+  function wellnessFields(x={}){
+    return '<label>Date</label><input type="date" name="date" required value="'+esc2(x.date||today())+'">'+
+      '<label>Symptom / status effect (optional)</label><input name="symptom" maxlength="100" value="'+esc2(x.symptom||'')+'" placeholder="Headache, nausea, fatigue...">'+
+      '<label>Severity</label><select name="severity">'+['None','Mild','Moderate','Severe'].map(v=>'<option '+((x.severity||'None')===v?'selected':'')+'>'+v+'</option>').join('')+'</select>'+
+      '<label>Mood</label><select name="mood">'+['Not recorded','Great','Good','Okay','Low','Anxious','Irritable','Overwhelmed'].map(v=>'<option '+((x.mood||'Not recorded')===v?'selected':'')+'>'+v+'</option>').join('')+'</select>'+
+      '<label>Energy (1–5)</label><select name="energy">'+['Not recorded','1','2','3','4','5'].map(v=>'<option '+((String(x.energy||'Not recorded'))===v?'selected':'')+'>'+v+'</option>').join('')+'</select>'+
+      '<label>Sleep (hours)</label><input name="sleep" type="number" min="0" max="24" step="0.5" value="'+esc2(x.sleep??'')+'" placeholder="e.g. 7.5">'+
+      '<label>Duration / frequency</label><input name="duration" maxlength="100" value="'+esc2(x.duration||'')+'" placeholder="A few hours, on and off...">'+
+      '<label>Possible triggers / context</label><input name="triggers" maxlength="250" value="'+esc2(x.triggers||'')+'" placeholder="Food, stress, activity, environment...">'+
+      '<label>Notes</label><textarea name="notes" maxlength="2000" placeholder="Anything else worth tracking">'+esc2(x.notes||'')+'</textarea>';
+  }
+  window.wellness=function(){
+    const entries=db.wellness.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    const history=entries.length?entries.map(x=>{
+      const i=db.wellness.indexOf(x);
+      return '<details class="rpgitem wellness-entry"><summary><b>'+esc2(x.date||'No date')+'</b> · '+esc2(x.symptom||'Wellness check-in')+' <span class="tag">'+esc2(x.severity||'None')+'</span></summary>'+
+        '<p class="rpgmuted">Mood: '+esc2(x.mood||'Not recorded')+' · Energy: '+esc2(x.energy||'Not recorded')+' · Sleep: '+esc2(x.sleep||'—')+' hrs</p>'+
+        (x.duration?'<p>Duration: '+esc2(x.duration)+'</p>':'')+(x.triggers?'<p>Possible triggers: '+esc2(x.triggers)+'</p>':'')+(x.notes?'<p>'+esc2(x.notes)+'</p>':'')+
+        '<form class="wellness-edit" onsubmit="saveWellness(event,'+i+')">'+wellnessFields(x)+'<div class="row"><button class="btn gold" type="submit">Save changes</button><button class="btn danger" type="button" onclick="deleteWellness('+i+')">Delete entry</button></div></form></details>';
+    }).join(''):'<p class="rpgmuted">No records yet. Your status log is blissfully empty. For now.</p>';
+    return '<div class="row between" style="margin:8px 0"><button class="btn" onclick="go(\'home\')">← BACK TO DASHBOARD</button><span class="tag">PRIVATE · THIS DEVICE</span></div>'+
+      '<div class="grid">'+panel('THE STATUS EFFECT REGISTRY','<p class="rpgmuted">Track symptoms, patterns and everyday wellness check-ins. No XP penalties, no judgment — just useful intel for future-you.</p><form id="wellnessForm" onsubmit="addWellness(event)">'+wellnessFields()+'<button class="btn gold" type="submit">＋ Log status report</button></form>','s6')+
+      panel('FIELD NOTES · '+entries.length+' RECORDS',history,'s6')+
+      panel('A NOTE FROM THE SYSTEM','<p class="rpgmuted">This is a personal tracking journal, not a diagnosis engine. Patterns can be useful to discuss with a qualified healthcare professional. Your entries are saved in this browser on this device.</p>','s12')+'</div>';
+  };
+  window.addWellness=function(e){
+    e.preventDefault();const f=e.currentTarget;if(!f.reportValidity())return;
+    const x=Object.fromEntries(new FormData(f));x.id=crypto.randomUUID();x.energy=x.energy==='Not recorded'?'':x.energy;x.mood=x.mood==='Not recorded'?'':x.mood;
+    db.wellness.push(x);save();render();
+  };
+  window.saveWellness=function(e,i){
+    e.preventDefault();const f=e.currentTarget;if(!f.reportValidity()||!db.wellness[i])return;
+    const x=Object.fromEntries(new FormData(f));x.id=db.wellness[i].id; x.energy=x.energy==='Not recorded'?'':x.energy;x.mood=x.mood==='Not recorded'?'':x.mood;
+    db.wellness[i]=x;save();render();
+  };
+  window.deleteWellness=function(i){
+    if(!db.wellness[i]||!confirm('Delete this wellness record?'))return;
+    db.wellness.splice(i,1);save();render();
+  };
+
+  /* Add the new wellness destination to the existing dashboard tile grid. */
+  const homeBeforeWellness=window.home;
+  window.home=function(){
+    const out=homeBeforeWellness();
+    const tile='<button class="module wellness-tile" data-id="wellness" onclick="go(\\'wellness\\')"><i>✚</i><b>STATUS EFFECTS</b></button>';
+    return out.replace(/(<div class="modulegrid">[\\s\\S]*?)(<\\/div>)$/, '$1'+tile+'$2');
+  };
+  home=window.home;
+  style.textContent += '.wellness-tile{color:#00eaff!important;border-color:#ff2aa6!important;background:linear-gradient(155deg,#3b1640,#10152d 72%)!important;box-shadow:inset 0 0 28px #ff2aa622,0 0 12px #00eaff33!important}.wellness-entry{margin:8px 0;padding:10px;background:#090d1b;border:1px solid #284b66}.wellness-entry summary{cursor:pointer;line-height:1.7}.wellness-edit{border-top:1px solid #284b66;margin-top:10px;padding-top:8px}';
+    /* Final dashboard/nav guard: keep legacy tab navigation hidden and render current daily quests. */
   const navGuard=$id('nav');
   if(navGuard){navGuard.style.setProperty('display','none','important');navGuard.setAttribute('aria-hidden','true');}
   /* The earlier home wrapper already adds THE SYSTEM and ACTIVE QUESTS. Do not add them twice. */
