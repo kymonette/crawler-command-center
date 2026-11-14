@@ -275,7 +275,9 @@
       if (client) {
         client.auth.getSession().then(({ data }) => {
           state.user = data?.session?.user || null;
-          if (state.user) loadMessages(false);
+          if (state.user) loadMessages(document.body.dataset.page === "partnerInbox").then(() => {
+            if (document.body.dataset.page === "partnerInbox" && typeof window.render === "function") window.render();
+          });
         });
         client.auth.onAuthStateChange((_event, session) => {
           state.user = session?.user || null;
