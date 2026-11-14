@@ -161,11 +161,12 @@
     const d=new Date(date+'T12:00:00');const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
-  function questPeriod(q){return q.type==='Daily'?dayKey():q.type==='Weekly'?weekKey():'once'}
-  function questActive(q){return !(q.donePeriods||[]).includes(questPeriod(q))}
+  /* Daily quests are one-time items, not recurring reminders. */
+  db.rpg.quests.forEach(q=>{q.completed=!!(q.completed||q.completedAt||(q.donePeriods||[]).length);q.createdAt??=today()});
+  function questActive(q){return !q.completed}
   function questMarkup(q){
     const done=!questActive(q);
-    return '<div class="rpgitem quest-row"><div class="row between"><b>'+esc2(q.name)+'</b><span class="tag">'+esc2(q.type)+'</span></div><div class="row between"><small class="rpgmuted">'+(done?'COMPLETED TODAY':'ACTIVE QUEST')+'</small><div class="row"><button class="btn '+(done?'':'gold')+'" '+(done?'disabled':'onclick="rpgQuestComplete(\''+q.id+'\')"')+'>'+(done?'✓ Complete':'Complete quest')+'</button><button class="btn danger" type="button" onclick="rpgQuestDelete(\''+q.id+'\')">Delete</button></div></div></div>';
+    return '<div class="rpgitem quest-row"><div class="row between"><b>'+esc2(q.name)+'</b><span class="tag">'+esc2(q.type)+'</span></div><div class="row between"><small class="rpgmuted">'+(done?'COMPLETED':'ACTIVE QUEST')+'</small><div class="row"><button class="btn '+(done?'':'gold')+'" '+(done?'disabled':'onclick="rpgQuestComplete(\''+q.id+'\')"')+'>'+(done?'✓ Complete':'Complete quest')+'</button><button class="btn danger" type="button" onclick="rpgQuestDelete(\''+q.id+'\')">Delete</button></div></div></div>';
   }
   window.rpgQuestDelete=function(id){
     const q=db.rpg.quests.find(x=>x.id===id);if(!q)return;
@@ -174,8 +175,8 @@
   };
   window.rpgQuestComplete=function(id){
     const q=db.rpg.quests.find(x=>x.id===id);if(!q||!questActive(q))return;
-    q.donePeriods??=[];const period=questPeriod(q);q.donePeriods.push(period);
-    award('structured-quest:'+id+':'+period,10,'Quest completed: '+q.name);
+    q.completed=true;q.completedAt=today();
+    award('structured-quest:'+id,10,'Quest completed: '+q.name);
     log('Quest cleared: '+q.name+'. The System is legally required to act impressed.','QUEST');
     save();check();render();
   };
@@ -183,8 +184,8 @@
     const active=db.rpg.quests.filter(questActive);
     const done=db.rpg.quests.filter(q=>!questActive(q));
     const activeList=active.length?active.map(questMarkup).join(''):'<p class="rpgmuted">No active quests. Suspiciously peaceful.</p>';
-    const completedList=done.length?'<details class="rpgitem"><summary>Completed this period ('+done.length+')</summary>'+done.map(questMarkup).join('')+'</details>':'';
-    const addForm='<form id="structuredQuestForm" class="rpgitem"><h3>ADD ANOTHER QUEST</h3><label>Quest name</label><input name="name" required maxlength="100" placeholder="What needs doing?"><input type="hidden" name="type" value="Daily"><small class="rpgmuted">Every quest resets daily.</small><button class="btn gold" type="submit">＋ Add quest</button><small class="rpgmuted">Add as many as you need. The form stays here after each one.</small></form>';
+    const completedList=done.length?'<details class="rpgitem"><summary>Completed quests ('+done.length+')</summary>'+done.map(questMarkup).join('')+'</details>':'';
+    const addForm='<form id="structuredQuestForm" class="rpgitem"><h3>ADD ANOTHER QUEST</h3><label>Quest name</label><input name="name" required maxlength="100" placeholder="What needs doing?"><input type="hidden" name="type" value="Daily"><small class="rpgmuted">One-time daily to-do. Once completed, it stays completed.</small><button class="btn gold" type="submit">＋ Add quest</button><small class="rpgmuted">Add as many as you need. The form stays here after each one.</small></form>';
     return panel('QUEST BOARD',activeList+completedList+addForm,'s12');
   }
   function systemAnnouncerPanel(){
@@ -200,7 +201,7 @@
     const active=quests.filter(questActive);
     const completed=quests.length-active.length;
     const structured=active.map(questMarkup).join('');
-    const progress=quests.length?'<small class="rpgmuted">'+active.length+' active · '+completed+' completed for their current period</small>':'';
+    const progress=quests.length?'<small class="rpgmuted">'+active.length+' active · '+completed+' completed</small>':'';
     const body=structured;
     return panel('ACTIVE QUESTS',progress+(body||'<p class="rpgmuted">No active quests. Suspiciously peaceful. Add one on the Daily Page quest board.</p>'),'s12');
   }
@@ -233,7 +234,7 @@
     if(f)f.onsubmit=e=>{
       e.preventDefault();const name=new FormData(f).get('name')?.toString().trim(),type=new FormData(f).get('type');
       if(!name)return;
-      db.rpg.quests.push({id:crypto.randomUUID(),name,type,createdAt:today(),donePeriods:[]});
+      db.rpg.quests.push({id:crypto.randomUUID(),name,type,createdAt:today(),completed:false,donePeriods:[]});
       log('New '+type.toLowerCase()+' quest registered: '+name+'. Try not to make it weird.','QUEST');
       save();render();
     };
@@ -366,7 +367,29 @@
   };
   home=window.home;
   style.textContent += '.wellness-tile{color:#00eaff!important;border-color:#ff2aa6!important;background:linear-gradient(155deg,#3b1640,#10152d 72%)!important;box-shadow:inset 0 0 28px #ff2aa622,0 0 12px #00eaff33!important}.wellness-entry{margin:8px 0;padding:10px;background:#090d1b;border:1px solid #284b66}.wellness-entry summary{cursor:pointer;line-height:1.7}.wellness-edit{border-top:1px solid #284b66;margin-top:10px;padding-top:8px}';
-    /* Final dashboard/nav guard: keep legacy tab navigation hidden and render current daily quests. */
+  
+  /* Money fields show a dollar prefix and accept cents, while storing numeric strings. */
+  function dollarInputs(html,name,expectedLabel){
+    const re=new RegExp('(<label>[^<]*<\\/label>)(<input name="'+name+'"[^>]*>)','g');
+    return html.replace(re,(all,label,input)=>{
+      const plain=label.replace(/<[^>]*>/g,'').trim();
+      if(expectedLabel && plain!==expectedLabel && plain!==expectedLabel+' ($)')return all;
+      if(!plain.endsWith('($)'))label=label.replace('</label>',' ($)</label>');
+      input=input.replace(/type="[^"]*"/,'type="number"').replace(/\\sstep="[^"]*"/g,'').replace(/\\smin="[^"]*"/g,'');
+      input=input.replace('<input ','<input step="0.01" min="0" inputmode="decimal" ');
+      return label+'<div class="money-field"><span>$</span>'+input+'</div>';
+    });
+  }
+  const moneyStyle=document.createElement('style');
+  moneyStyle.textContent='.money-field{display:flex;align-items:center;width:100%;background:#090d1b;border:1px solid #00dff077}.money-field>span{padding:0 0 0 10px;color:#f5ff00;font:700 13px system-ui}.money-field input{border:0!important;padding-left:6px!important;background:transparent!important;min-width:0}.money-field:focus-within{border-color:#ff2aa6;box-shadow:0 0 8px #ff2aa655}';
+  document.head.appendChild(moneyStyle);
+  const budgetBeforeMoney=window.budget;
+  window.budget=function(){return dollarInputs(budgetBeforeMoney(),'amount','Amount')};
+  const dailyBeforeMoney=window.daily;
+  window.daily=function(){let out=dailyBeforeMoney();out=dollarInputs(out,'moneyIn','Gold gained ($)');out=dollarInputs(out,'moneyOut','Gold spent ($)');return out};
+  daily=window.daily;
+
+  /* Final dashboard/nav guard: keep legacy tab navigation hidden and render current daily quests. */
   const navGuard=$id('nav');
   if(navGuard){navGuard.style.setProperty('display','none','important');navGuard.setAttribute('aria-hidden','true');}
   /* The earlier home wrapper already adds THE SYSTEM and ACTIVE QUESTS. Do not add them twice. */
