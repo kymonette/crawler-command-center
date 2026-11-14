@@ -375,7 +375,7 @@
       const plain=label.replace(/<[^>]*>/g,'').trim();
       if(expectedLabel && plain!==expectedLabel && plain!==expectedLabel+' ($)')return all;
       if(!plain.endsWith('($)'))label=label.replace('</label>',' ($)</label>');
-      input=input.replace(/type="[^"]*"/,'type="number"').replace(/\\sstep="[^"]*"/g,'').replace(/\\smin="[^"]*"/g,'');
+      input=input.replace(/type="[^"]*"/,'type="number"').replace(/\sstep="[^"]*"/g,'').replace(/\smin="[^"]*"/g,'');
       input=input.replace('<input ','<input step="0.01" min="0" inputmode="decimal" ');
       return label+'<div class="money-field"><span>$</span>'+input+'</div>';
     });
