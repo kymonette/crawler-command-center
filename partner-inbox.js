@@ -233,13 +233,12 @@
   };
 
   window.partnerInboxRefresh = async function () {
-    await loadMessages();
+    await loadMessages(true);
     window.render();
   };
 
   window.partnerInboxPage = function () {
     styles();
-    if (state.user) loadMessages(true);
     return pageHtml();
   };
 
@@ -254,6 +253,17 @@
       wrappedGo.__partnerWrapped = true;
       window.go = wrappedGo;
       try { go = wrappedGo; } catch (_) {}
+      const originalGoWithInbox = wrappedGo;
+      const goWithInbox = function (p) {
+        const result = originalGoWithInbox.apply(this, arguments);
+        if (p === "partnerInbox" && state.user) {
+          loadMessages(true).then(() => { if (document.body.dataset.page === "partnerInbox") window.render(); });
+        }
+        return result;
+      };
+      goWithInbox.__partnerWrapped = true;
+      window.go = goWithInbox;
+      try { go = goWithInbox; } catch (_) {}
     }
     if (Array.isArray(pages) && !pages.some(p => p[0] === "partnerInbox")) {
       pages.push(["partnerInbox", "✉", "Partner Inbox"]);
