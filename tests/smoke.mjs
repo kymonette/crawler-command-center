@@ -79,7 +79,7 @@ await page.evaluate(() => go('daily'));
 await page.getByRole('button', { name: 'Complete quest' }).click();
 assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).rpg.quests[0].completed), true, 'quest should be permanently completed');
 await page.evaluate(() => go('home'));
-assert.doesNotMatch(await page.locator('#view').innerText(), /Wash dishes/, 'completed one-time quest must not reappear on a later day');
+assert.equal(await page.locator('#view .quest-row').count(), 0, 'completed one-time quest must not reappear in the active dashboard list');
 await page.locator('#dailyDate').fill('2026-11-05');
 await page.locator('textarea[name="notes"]').fill('Saved on selected date');
 await page.getByRole('button', { name: 'Save Daily Record' }).click();
