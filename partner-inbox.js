@@ -263,6 +263,16 @@
 
   function install() {
     styles();
+    if (typeof window.go === "function" && !window.go.__partnerWrapped) {
+      const originalGo = window.go;
+      const wrappedGo = function (p) {
+        document.body.dataset.page = p;
+        return originalGo.apply(this, arguments);
+      };
+      wrappedGo.__partnerWrapped = true;
+      window.go = wrappedGo;
+      try { go = wrappedGo; } catch (_) {}
+    }
     if (Array.isArray(pages) && !pages.some(p => p[0] === "partnerInbox")) {
       pages.push(["partnerInbox", "✉", "Partner Inbox"]);
     }
