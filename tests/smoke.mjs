@@ -142,6 +142,7 @@ await page.locator('.wellness-edit input[name="symptom"]').fill('Edited headache
 await page.locator('.wellness-edit button[type="submit"]').click();
 wellnessData = await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).wellness);
 assert.equal(wellnessData[0].symptom, 'Edited headache', 'wellness entries should be editable');
+await page.locator('.wellness-entry summary').click();
 page.once('dialog', dialog => dialog.accept());
 await page.locator('.wellness-entry button.danger').click();
 wellnessData = await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).wellness);
