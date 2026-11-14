@@ -241,6 +241,9 @@
     styles();
     return pageHtml();
   };
+  /* Expose the page under the exact route key used by both planners. */
+  window.partnerInbox = window.partnerInboxPage;
+  try { partnerInbox = window.partnerInboxPage; } catch (_) {}
 
   function install() {
     styles();
