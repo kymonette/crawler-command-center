@@ -361,8 +361,8 @@
   const homeBeforeWellness=window.home;
   window.home=function(){
     const out=homeBeforeWellness();
-    const tile='<button class="module wellness-tile" data-id="wellness" onclick="go(\\'wellness\\')"><i>✚</i><b>STATUS EFFECTS</b></button>';
-    return out.replace(/(<div class="modulegrid">[\\s\\S]*?)(<\\/div>)$/, '$1'+tile+'$2');
+    const tile='<button class="module wellness-tile" data-id="wellness" onclick="go(\'wellness\')"><i>✚</i><b>STATUS EFFECTS</b></button>';
+    return out.replace(/(<div class="modulegrid">[\s\S]*?)(<\/div>)$/, '$1'+tile+'$2');
   };
   home=window.home;
   style.textContent += '.wellness-tile{color:#00eaff!important;border-color:#ff2aa6!important;background:linear-gradient(155deg,#3b1640,#10152d 72%)!important;box-shadow:inset 0 0 28px #ff2aa622,0 0 12px #00eaff33!important}.wellness-entry{margin:8px 0;padding:10px;background:#090d1b;border:1px solid #284b66}.wellness-entry summary{cursor:pointer;line-height:1.7}.wellness-edit{border-top:1px solid #284b66;margin-top:10px;padding-top:8px}';
