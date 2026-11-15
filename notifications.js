@@ -4,12 +4,14 @@
   const PUBLIC_KEY = "BD4e_I-ch8sZrq9iZnuldCyHJFjNeT51J2rdrD20gyZ44AJG6eydsXDMwQxc8OPkdyKz-2Z2YSyJ73soCBOJLaI";
   const PLANNER = location.pathname.toLowerCase().includes("hyrule-command-center") ? "hyrule" : "dcc";
   const TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Los_Angeles";
+  const accent = PLANNER === "hyrule" ? "#e8c56a" : "#00eaff";
   const b64 = s => Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/").padEnd(Math.ceil(s.length/4)*4,"=")),c=>c.charCodeAt(0));
   const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   let initialized = false, currentUser = null, client = null;
 
   async function getAuth() {
     if (window.partnerInboxGetSession) {
+      for (let i=0; i<40 && !window.supabase?.createClient; i++) await new Promise(resolve=>setTimeout(resolve,150));
       const session = await window.partnerInboxGetSession();
       client = session.client; currentUser = session.user; return session;
     }
@@ -24,7 +26,6 @@
   function panel(){
     const isH=PLANNER==="hyrule";
     const title=isH?"ROYAL MESSENGER":"SYSTEM NOTIFICATIONS";
-    const accent=isH?"#e8c56a":"#00eaff";
     const html=`<section class="panel s12 planner-notify-panel"><h3>${title}</h3>
       <p class="muted">Receive reminders on this phone, even when the planner is closed. Notifications are private to this planner and signed-in account.</p>
       <div id="plannerNotifyStatus" class="planner-notify-status" hidden></div>
@@ -39,7 +40,7 @@
       <h3 style="margin-top:18px">YOUR REMINDERS</h3><div id="plannerReminderList" class="planner-reminder-list"><p class="muted">Loading reminders…</p></div>
       <p class="muted">Phone notification permission is controlled by Android. If you previously blocked it, allow notifications for this installed app in Android settings.</p>
     </section>`;
-    setTimeout(()=>initPanel(),0);
+    setTimeout(()=>{initialized=false;initPanel();},0);
     return html;
   }
   async function initPanel(){
