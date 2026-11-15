@@ -30,6 +30,21 @@
       <p class="muted">Receive reminders on this phone, even when the planner is closed. Notifications are private to this planner and signed-in account.</p>
       <div id="plannerNotifyStatus" class="planner-notify-status" hidden></div>
       <div class="row" style="margin:10px 0"><button class="btn gold" type="button" onclick="plannerEnablePush()">Enable phone notifications</button><button class="btn" type="button" onclick="plannerRefreshReminders()">Refresh reminders</button></div>
+      <div class="planner-auto-panel">
+        <h3>${isH ? "ROYAL ROUTINES" : "SYSTEM-ISSUED PROMPTS"}</h3>
+        <p class="muted">${isH ? "Choose when the kingdom sends gentle reminders." : "Choose when the System sends its daily directives."} Each prompt can be switched on or off.</p>
+        <form id="plannerAutoPrefsForm" onsubmit="plannerSaveAutoPrefs(event)">
+          ${[
+            ["morning",isH?"DAWN DISPATCH":"MORNING SYSTEM BRIEFING", "08:00"],
+            ["habits",isH?"HABIT TRAINING REMINDER":"DAILY HABIT CHECK", "18:00"],
+            ["evening",isH?"EVENING AT THE CASTLE":"END-OF-DAY CRAWLER CHECK", "21:00"],
+            ["weekly",isH?"WEEKLY HERO'S JOURNAL":"WEEKLY CRAWLER DEBRIEF", "18:00"]
+          ].map(([key,title,time])=>`<div class="planner-auto-row"><label><input type="checkbox" name="enabled_${key}"> <b>${title}</b></label><input type="time" name="time_${key}" value="${time}" aria-label="${title} time"></div>`).join("")}
+          <label class="planner-auto-day">Weekly recap day <select name="weekly_day"><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select></label>
+          <button class="btn gold" type="submit">Save automatic notifications</button>
+        </form>
+        <p class="muted">${isH ? "New letters from your companion will also trigger a Royal Messenger alert." : "New messages from your companion will also trigger a System notification."}</p>
+      </div>
       <form id="plannerReminderForm" class="planner-reminder-form" onsubmit="plannerSaveReminder(event)">
         <label>Reminder title</label><input name="title" maxlength="120" required placeholder="e.g. Take a break">
         <label>Message (optional)</label><input name="body" maxlength="240" placeholder="A little nudge from your planner">
@@ -47,6 +62,37 @@
     if(initialized)return; initialized=true;
     try { await getAuth(); if(!currentUser){status("Sign in through Partner Inbox on this planner first. Notifications are tied to that account.",true);document.getElementById("plannerReminderList").innerHTML='<p class="muted">Sign in to manage reminders.</p>';return;} await loadReminders(); }
     catch(e){status(e.message||"Could not load notification settings.",true);}
+  }
+  const AUTO_CATEGORIES = ["morning","habits","evening","weekly"];
+  const AUTO_DEFAULTS = {morning:"08:00",habits:"18:00",evening:"21:00",weekly:"18:00"};
+  async function loadAutoPrefs(){
+    const {client,user}=await getAuth(); if(!user)return;
+    const {data,error}=await client.from("planner_notification_preferences").select("category,enabled,local_time,weekly_day").eq("user_id",user.id).eq("planner",PLANNER);
+    if(error)throw error;
+    const form=document.getElementById("plannerAutoPrefsForm"); if(!form)return;
+    for(const category of AUTO_CATEGORIES){
+      const row=(data||[]).find(x=>x.category===category);
+      form.elements["enabled_"+category].checked=!!row?.enabled;
+      form.elements["time_"+category].value=row?.local_time?.slice(0,5)||AUTO_DEFAULTS[category];
+      if(category==="weekly" && row)form.elements.weekly_day.value=String(row.weekly_day??0);
+    }
+  }
+  async function saveAutoPrefs(event){
+    event.preventDefault();
+    try{
+      const {client,user}=await getAuth();if(!user)throw new Error("Sign in through Partner Inbox first.");
+      const form=event.currentTarget;
+      const weeklyDay=Number(form.elements.weekly_day.value||0);
+      const rows=AUTO_CATEGORIES.map(category=>({
+        user_id:user.id,planner:PLANNER,category,
+        enabled:form.elements["enabled_"+category].checked,
+        local_time:form.elements["time_"+category].value||AUTO_DEFAULTS[category],
+        timezone:TIMEZONE,weekly_day:weeklyDay,updated_at:new Date().toISOString()
+      }));
+      const {error}=await client.from("planner_notification_preferences").upsert(rows,{onConflict:"user_id,planner,category"});
+      if(error)throw error;
+      status(PLANNER==="hyrule"?"Royal routines saved. The kingdom will send alerts at your chosen times.":"System prompts saved. The System will report at your chosen times.");
+    }catch(e){status(e.message||"Could not save automatic notifications.",true);}
   }
   async function loadReminders(){
     const {client,user}=await getAuth();if(!user){status("Sign in through Partner Inbox first.",true);return;}
@@ -88,6 +134,7 @@
     catch(e){status(e.message||"Could not delete reminder.",true);}
   }
   window.plannerNotificationsPanel=panel;
+  window.plannerSaveAutoPrefs=saveAutoPrefs;
   window.plannerEnablePush=enablePush;
   window.plannerSaveReminder=saveReminder;
   window.plannerRefreshReminders=async()=>{try{await loadReminders();status("Reminders refreshed.");}catch(e){status(e.message,true);}};
@@ -97,6 +144,11 @@
     .planner-notify-status{padding:10px;margin:8px 0;background:#15332e;color:#baf6dc;border:1px solid #368b72;border-radius:8px;font:12px system-ui}
     .planner-notify-status.error{background:#3b1b27;color:#ffd2dc;border-color:#9b465f}
     .planner-reminder-form{display:grid;gap:5px;max-width:620px;margin-top:12px}
+    .planner-auto-panel{margin:14px 0;padding:13px;border:1px solid #00eaff55;border-radius:10px;background:#080e19}
+    .planner-auto-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #34485e}
+    .planner-auto-row label{display:flex;align-items:center;gap:8px;flex:1;font-size:12px}
+    .planner-auto-row input[type=time],.planner-auto-day select{background:#111b2b;color:#fff;border:1px solid #52647b;border-radius:6px;padding:7px}
+    .planner-auto-day{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0;font-size:12px}
     .planner-reminder-list{display:grid;gap:8px}
     .planner-reminder{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;background:#080e19;border:1px solid ${accent}55;border-radius:8px;font:12px system-ui}
     .planner-reminder small{display:block;color:#a6b5c9;margin-top:4px}
