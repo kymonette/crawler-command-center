@@ -123,7 +123,7 @@
       const type = TYPES.find(x => x[0] === m.message_type)?.[1] || "Message";
       return `<article class="partner-message ${outgoing ? "outgoing" : "incoming"}">
         <div class="partner-message-head"><span class="partner-message-type">${esc(type)}</span><span>${outgoing ? "You" : "Your partner"} · ${esc(fmt(m.created_at))}</span></div>
-        <div class="partner-message-body">${esc(m.body)}</div>
+        <div class="partner-message-body">${esc(String(m.body || "").replace(/\\n/g, "\n"))}</div>
       </article>`;
     }).join("");
     return `
@@ -344,6 +344,14 @@
       pages.push(["partnerInbox", "✉", "Partner Inbox"]);
     }
     addTileToHome();
+    if (!window.__partnerInboxPolling) {
+      window.__partnerInboxPolling = true;
+      window.setInterval(() => {
+        if (document.visibilityState === "visible" &&
+            document.body.dataset.page === "partnerInbox" &&
+            state.user && !state.loading) refresh();
+      }, 15000);
+    }
     if (!initialized) {
       initialized = true;
       const client = getClient();
