@@ -301,6 +301,14 @@
     window.render();
   };
 
+  window.partnerInboxGetSession = async function () {
+    const client = getClient();
+    if (!client) throw new Error("Sign-in service is still loading. Refresh and try again.");
+    const { data, error } = await client.auth.getSession();
+    if (error) throw error;
+    return { client, user: data?.session?.user || null };
+  };
+
   window.partnerInboxPage = function () {
     styles();
     return pageHtml();
