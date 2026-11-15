@@ -240,20 +240,43 @@
 
   window.partnerInboxSend = async function (event) {
     event.preventDefault();
+    const notice = document.getElementById("partnerInboxNotice");
+    const showError = message => {
+      state.error = message;
+      state.note = "";
+      if (notice) { notice.style.display="block"; notice.className="partner-status error"; notice.textContent=message; }
+    };
+    if (state.loading) return;
     const feeling = document.getElementById("partnerInboxFeeling")?.value || "";
     const need = document.getElementById("partnerInboxNeed")?.value || "";
     const appreciation = document.getElementById("partnerInboxAppreciation")?.value.trim() || "";
     const note = document.getElementById("partnerInboxBody")?.value.trim() || "";
     const message_type = document.getElementById("partnerInboxType")?.value || "check_in";
-    if (!feeling || !need || !state.user) return;
-    const body = [
-      "HOW I'M FEELING: " + feeling,
-      "WHAT I NEED FROM YOU: " + need,
-      appreciation ? "SOMETHING I APPRECIATE: " + appreciation : "",
-      note ? "A NOTE FROM ME: " + note : ""
-    ].filter(Boolean).join("\\n\\n");
+    if (!feeling || !need) {
+      showError("Choose how you're feeling and what you need before sending.");
+      return;
+    }
     const client = getClient();
+    if (!client) {
+      showError("The message service isn't connected. Check your internet connection and refresh.");
+      return;
+    }
+    state.loading = true;
+    const sendButton = event.submitter;
+    if (sendButton) { sendButton.disabled = true; sendButton.textContent = "Sending…"; }
     try {
+      if (!state.user) {
+        const { data, error } = await client.auth.getSession();
+        if (error) throw error;
+        state.user = data?.session?.user || null;
+      }
+      if (!state.user) throw new Error("Your sign-in session has expired. Sign out, sign back in, and try again.");
+      const body = [
+        "HOW I'M FEELING: " + feeling,
+        "WHAT I NEED FROM YOU: " + need,
+        appreciation ? "SOMETHING I APPRECIATE: " + appreciation : "",
+        note ? "A NOTE FROM ME: " + note : ""
+      ].filter(Boolean).join("\n\n");
       const { error } = await client.from("partner_messages").insert({
         pair_id:PAIR_ID, sender_id:state.user.id, body, message_type
       });
@@ -265,11 +288,11 @@
       state.note = "Your check-in has been sent. 💛";
       state.error = "";
       await loadMessages();
-      window.render();
     } catch (e) {
-      state.error = e?.message || "Message could not be sent.";
-      state.note = "";
-      window.render();
+      showError(e?.message || "Message could not be sent. Please try again.");
+    } finally {
+      state.loading = false;
+      if (typeof window.render === "function" && document.body.dataset.page === "partnerInbox") window.render();
     }
   };
 
