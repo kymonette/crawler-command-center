@@ -1,5 +1,5 @@
-const CACHE = "crawler-command-center-v50";
-const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.png", "./rpg.js?v=9", "./partner-inbox.js?v=13", "./notifications.js"];
+const CACHE = "crawler-command-center-v51";
+const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.png", "./rpg.js?v=10", "./partner-inbox.js?v=13", "./notifications.js"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
