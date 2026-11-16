@@ -451,6 +451,18 @@
   home=window.home;render=window.render;
   /* Preserve the original tile artwork size; only let long labels wrap cleanly. */
   style.textContent += '.modulegrid .module{box-sizing:border-box;min-width:0;overflow:hidden}.modulegrid .module b{display:block;width:100%;max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.2;text-align:center;letter-spacing:.025em;font-size:clamp(9px,2.6vw,12px);padding:0 3px;box-sizing:border-box}';
+
+  /* Give the lower RPG tiles the same distinct neon palette treatment as the core tiles. */
+  style.textContent += `
+    .module[data-id="dungeon"]{color:#ff2aa6!important;border-color:#ff2aa6!important;background:linear-gradient(155deg,#501044,#10152d 72%)!important;box-shadow:inset 0 0 28px #ff2aa622,0 0 12px #ff2aa644!important}
+    .module[data-id="trophies"]{color:#f5ff00!important;border-color:#f5ff00!important;background:linear-gradient(155deg,#424000,#10152d 72%)!important;box-shadow:inset 0 0 28px #f5ff0022,0 0 12px #f5ff0044!important}
+    .module[data-id="achievements"]{color:#00eaff!important;border-color:#00eaff!important;background:linear-gradient(155deg,#073d62,#10152d 72%)!important;box-shadow:inset 0 0 28px #00eaff22,0 0 12px #00eaff44!important}
+    .module[data-id="systemLog"]{color:#ff647c!important;border-color:#ff647c!important;background:linear-gradient(155deg,#45132d,#10152d 72%)!important;box-shadow:inset 0 0 28px #ff647c22,0 0 12px #ff647c44!important}
+    .module[data-id="recaps"]{color:#00f5a8!important;border-color:#00f5a8!important;background:linear-gradient(155deg,#064b37,#10152d 72%)!important;box-shadow:inset 0 0 28px #00f5a822,0 0 12px #00f5a844!important}
+    .module[data-id="wellness"]{color:#b66bff!important;border-color:#b66bff!important;background:linear-gradient(155deg,#32105c,#10152d 72%)!important;box-shadow:inset 0 0 28px #b66bff22,0 0 12px #b66bff44!important}
+    .module[data-id="scratchpad"]{color:#ff9d00!important;border-color:#ff9d00!important;background:linear-gradient(155deg,#4a2608,#10152d 72%)!important;box-shadow:inset 0 0 28px #ff9d0022,0 0 12px #ff9d0044!important}
+    .module[data-id="dungeon"] b,.module[data-id="trophies"] b,.module[data-id="achievements"] b,.module[data-id="systemLog"] b,.module[data-id="recaps"] b,.module[data-id="wellness"] b,.module[data-id="scratchpad"] b{color:currentColor!important;text-shadow:0 0 8px currentColor,0 2px 5px #000!important}
+  `;
   style.textContent += '.scratch-panel{padding:16px!important;margin-bottom:8px}.scratch-panel h3{margin-top:0}.scratch-panel input,.scratch-panel select{width:100%;box-sizing:border-box}.scratch-panel .big{font-size:42px;margin:8px 0}.scratch-group{margin:12px 0;padding:10px;border:1px solid #00dff044;background:#070b17}.scratch-group h4{margin:0 0 8px;color:#00eaff;font:700 12px Orbitron,sans-serif;letter-spacing:.12em}.scratch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid #29445b}.scratch-row:last-child{border-bottom:0}.scratch-row label{display:flex;align-items:center;gap:10px;min-width:0;flex:1;color:#e8f7ff}.scratch-row input[type=checkbox]{width:20px;min-width:20px;height:20px;accent-color:#00eaff}.scratch-done{text-decoration:line-through;opacity:.55}.scratch-delete{padding:4px 10px;min-width:34px}.scratch-tile{color:#00eaff!important;border-color:#f5ff00!important;background:linear-gradient(155deg,#34300a,#10152d 72%)!important;box-shadow:inset 0 0 28px #f5ff0018,0 0 12px #00eaff33!important}';
 
 })();
