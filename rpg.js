@@ -112,7 +112,31 @@
   window.taskDone=function(id,v){const t=dRec().todo.find(x=>x.id===id);if(t){t.done=v;if(v)award('quest:'+id,10,'Daily quest completed: '+t.text)}save();check();render()};
   window.toggleTask=function(id,v){const t=db.daily[today()]?.todo?.find(x=>x.id===id);if(t){t.done=v;if(v)award('quest:'+id,10,'Daily quest completed: '+t.text)}save();check();render()};
   window.habitToggle=function(i,s){const h=db.habits[i];if(!h)return;h.done??=[];const had=h.done.includes(s);h.done=had?h.done.filter(x=>x!==s):[...h.done,s];if(!had){award('habit:'+i+':'+s,5,'Habit completed: '+h.name);if(db.habits.length&&db.habits.every(x=>(x.done||[]).includes(s)))award('allhabits:'+s,20,'All habits completed for the day')}save();check();render()};
-  const style=document.createElement('style');style.textContent=`:root{--bg:#070a12;--p:#10182a;--line:#284b66;--gold:#eaff00;--muted:#91a9bb;--ink:#e8f7ff;--cyan:#00eaff;--green:#b7ff00;--red:#ff3d9a}body{background:radial-gradient(ellipse at top,#111b32 0%,var(--bg) 58%);color:var(--ink);font-family:system-ui,sans-serif}h1,h2,h3,.eyebrow{letter-spacing:.08em;text-transform:uppercase}.panel,.module,.card{border-color:#254b65;box-shadow:0 0 0 1px #00eaff12,0 0 16px #00eaff0c;background:linear-gradient(145deg,#111a2b,#0b101d)}.btn,.module{border-color:#00eaff66}.btn.gold{color:#f5ff00;border-color:#eaff0088;box-shadow:0 0 12px #eaff0020}.module i{color:#00eaff;text-shadow:0 0 10px #00eaff}.modulegrid{grid-template-columns:repeat(2,minmax(0,1fr))}.rpgbar{height:9px;background:#090d1b;border:1px solid var(--line);margin:8px 0}.rpgbar span{display:block;height:100%;background:linear-gradient(90deg,#ff2aa6,#00eaff,#f5ff00);box-shadow:0 0 10px #00eaff66}.system-announcer{position:relative;isolation:isolate;overflow:hidden;border:1px solid #ff2aa6!important;border-left:5px solid #ff2aa6!important;border-radius:5px;background:radial-gradient(ellipse at 90% 0%,#00eaff25 0%,transparent 42%),radial-gradient(ellipse at 0% 100%,#ff2aa622 0%,transparent 48%),linear-gradient(135deg,#1b1230 0%,#111a30 52%,#090d1c 100%)!important;box-shadow:0 0 0 1px #ff2aa633,0 0 22px #ff2aa655,0 0 42px #00eaff22,inset 0 0 38px #00eaff12!important;padding:20px!important;margin:0 0 18px!important}.system-announcer:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 5px,#00eaff08 6px,transparent 7px);opacity:.45}.system-announcer-head{display:flex;align-items:center;gap:10px;color:#ff65c4;letter-spacing:.18em;font-size:13px;font-weight:900;padding:0 0 13px;border-bottom:1px solid #00eaff66;text-shadow:0 0 12px #ff2aa688}.system-announcer-head b{font-size:15px;letter-spacing:.2em}.system-announcer-head small{margin-left:auto;color:#00f5ff;font-size:10px;font-weight:900;letter-spacing:.18em;border:1px solid #00eaff99;background:#00eaff18;padding:6px 9px;box-shadow:0 0 14px #00eaff33}.system-pulse{width:11px;height:11px;flex:0 0 11px;border-radius:50%;background:#ff2aa6;box-shadow:0 0 0 5px #ff2aa622,0 0 18px 5px #ff2aa6;animation:systemBeacon 1.8s ease-in-out infinite}.system-announcer-message{font-size:21px;line-height:1.45;font-weight:850;color:#f1f8ff!important;margin:18px 0 14px;text-shadow:0 2px 16px #00eaff33}.system-announcer>.rpgmuted{display:block;color:#a8bfd2!important;font-size:11px;line-height:1.5;padding-bottom:12px;border-bottom:1px solid #ff2aa655}.system-feed{border:0;margin-top:12px;padding:0;display:grid;gap:8px}.system-feed-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:10px 12px;border:1px solid #34516a;background:linear-gradient(90deg,#00eaff12,#101a2caa);border-left:2px solid #00eaff;color:#c8d8e8;font-size:12px;line-height:1.45}.system-feed-row small{white-space:nowrap;color:#00f5ff;font-weight:800}@keyframes systemBeacon{0%,100%{box-shadow:0 0 0 4px #ff2aa622,0 0 12px 2px #ff2aa6}50%{box-shadow:0 0 0 8px #ff2aa611,0 0 22px 7px #ff2aa6}}@media(prefers-reduced-motion:reduce){.system-pulse{animation:none}}.rpgitem{border:1px solid var(--line);padding:12px;margin:8px 0;background:#101326}.rpgmuted{color:var(--muted);font:11px system-ui}input,select,textarea{accent-color:#00eaff}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #eaff00;outline-offset:2px}`;document.head.append(style);
+  const style=document.createElement('style');style.textContent=`:root{--bg:#070a12;--p:#10182a;--line:#284b66;--gold:#eaff00;--muted:#91a9bb;--ink:#e8f7ff;--cyan:#00eaff;--green:#b7ff00;--red:#ff3d9a}body{background:radial-gradient(ellipse at top,#111b32 0%,var(--bg) 58%);color:var(--ink);font-family:system-ui,sans-serif}h1,h2,h3,.eyebrow{letter-spacing:.08em;text-transform:uppercase}.panel,.module,.card{border-color:#254b65;box-shadow:0 0 0 1px #00eaff12,0 0 16px #00eaff0c;background:linear-gradient(145deg,#111a2b,#0b101d)}.btn,.module{border-color:#00eaff66}.btn.gold{color:#f5ff00;border-color:#eaff0088;box-shadow:0 0 12px #eaff0020}.module i{color:#00eaff;text-shadow:0 0 10px #00eaff}.modulegrid{grid-template-columns:repeat(2,minmax(0,1fr))}.rpgbar{height:9px;background:#090d1b;border:1px solid var(--line);margin:8px 0}.rpgbar span{display:block;height:100%;background:linear-gradient(90deg,#ff2aa6,#00eaff,#f5ff00);box-shadow:0 0 10px #00eaff66}/* System Core: distinct holographic broadcast console */
+.system-announcer{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:112px minmax(0,1fr);gap:18px;align-items:stretch;padding:0!important;margin:0 0 20px!important;border:1px solid #385a83!important;border-radius:3px!important;background:linear-gradient(115deg,#080d1d 0%,#10172d 58%,#160d29 100%)!important;box-shadow:0 12px 32px #0009,inset 0 0 35px #00eaff0c!important}
+.system-announcer:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(115deg,transparent 0 36%,#00eaff0b 36.2%,transparent 36.8%),repeating-linear-gradient(0deg,transparent 0 21px,#00eaff09 22px,transparent 23px);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+.system-announcer:after{content:"SYSTEM NETWORK // NODE 01";position:absolute;right:12px;bottom:7px;color:#6e83a1;font:8px Orbitron,sans-serif;letter-spacing:.18em;opacity:.65;pointer-events:none}
+.system-core-visual{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:174px;overflow:hidden;background:radial-gradient(circle at 50% 43%,#00eaff2b 0%,#ff2aa61a 38%,transparent 70%),linear-gradient(180deg,#111d38,#0a1020);border-right:1px solid #00eaff66}
+.system-core-visual:before,.system-core-visual:after{content:"";position:absolute;width:82px;height:82px;border:1px solid #00eaff88;border-radius:50%;box-shadow:0 0 18px #00eaff33,inset 0 0 18px #00eaff22}
+.system-core-visual:before{width:96px;height:96px;border-style:dashed;animation:coreOrbit 18s linear infinite}
+.system-core-visual:after{width:70px;height:70px;border-color:#ff2aa6aa;border-left-color:transparent;border-right-color:transparent;animation:coreOrbit 9s linear infinite reverse}
+.system-core-glyph{position:relative;z-index:1;display:grid;place-items:center;width:58px;height:58px;color:#f5ff00;font:36px Orbitron,sans-serif;text-shadow:0 0 10px #f5ff00,0 0 25px #00eaff;background:radial-gradient(circle,#00eaff22,#090d1c 72%);border:1px solid #f5ff00aa;clip-path:polygon(50% 0,91% 22%,91% 78%,50% 100%,9% 78%,9% 22%)}
+.system-core-label{position:relative;z-index:1;color:#00eaff;font:700 8px Orbitron,sans-serif;letter-spacing:.2em;text-align:center}
+.system-core-state{position:relative;z-index:1;color:#ff6ac5;font:700 8px Orbitron,sans-serif;letter-spacing:.16em}
+.system-announcer-content{min-width:0;padding:17px 17px 24px 0}
+.system-announcer-head{display:flex;align-items:center;gap:9px;margin:0 0 13px;padding:0 0 10px;border-bottom:1px solid #385a83;color:#ff62bf;font:800 11px Orbitron,sans-serif;letter-spacing:.17em}
+.system-announcer-head b{font:800 12px Orbitron,sans-serif}
+.system-announcer-head small{margin-left:auto;color:#00efff;font:700 8px Orbitron,sans-serif;letter-spacing:.14em;text-align:right}
+.system-pulse{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#ff2aa6;box-shadow:0 0 0 4px #ff2aa622,0 0 14px #ff2aa6;animation:systemBeacon 1.7s ease-in-out infinite}
+.system-announcer-message{position:relative;margin:0 0 12px;padding:13px 14px 14px 17px;border-left:3px solid #f5ff00;background:linear-gradient(90deg,#ff2aa61c,#00eaff0b 72%,transparent);color:#f3f7ff!important;font:700 18px/1.4 Rajdhani,sans-serif;letter-spacing:.015em;text-shadow:0 0 18px #00eaff25}
+.system-announcer>.rpgmuted{display:block;margin:0 0 11px;color:#9eafc9!important;font:10px/1.45 Rajdhani,sans-serif}
+.system-feed{display:grid;gap:5px;margin-top:9px;padding-top:9px;border-top:1px solid #385a8366}
+.system-feed-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;padding:7px 9px;background:#070d1b99;border-left:2px solid #00cfe8;color:#b7c8dc;font:11px/1.35 Rajdhani,sans-serif}
+.system-feed-row:nth-child(2){border-left-color:#ff4db8}
+.system-feed-row small{white-space:nowrap;color:#00eaff;font:700 8px Orbitron,sans-serif}
+@keyframes coreOrbit{to{transform:rotate(360deg)}}@keyframes systemBeacon{0%,100%{box-shadow:0 0 0 3px #ff2aa622,0 0 10px 2px #ff2aa6}50%{box-shadow:0 0 0 7px #ff2aa611,0 0 20px 6px #ff2aa6}}
+@media(max-width:560px){.system-announcer{grid-template-columns:82px minmax(0,1fr);gap:12px}.system-core-visual{min-height:100%;gap:9px}.system-core-visual:before{width:70px;height:70px}.system-core-visual:after{width:54px;height:54px}.system-core-glyph{width:43px;height:43px;font-size:27px}.system-announcer-content{padding:13px 10px 24px 0}.system-announcer-head{font-size:9px;letter-spacing:.1em}.system-announcer-head b{font-size:10px}.system-announcer-head small{font-size:7px;letter-spacing:.08em}.system-announcer-message{font-size:16px;padding:10px 10px 11px 12px}.system-feed-row{font-size:10px;gap:6px}.system-announcer:after{font-size:7px;right:7px}}
+@media(prefers-reduced-motion:reduce){.system-pulse,.system-core-visual:before,.system-core-visual:after{animation:none}}.rpgitem{border:1px solid var(--line);padding:12px;margin:8px 0;background:#101326}.rpgmuted{color:var(--muted);font:11px system-ui}input,select,textarea{accent-color:#00eaff}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #eaff00;outline-offset:2px}`;document.head.append(style);
   const newPages=[['dungeon','⚔','Dungeon'],['trophies','♜','Trophy Room'],['achievements','✧','Achievement Gallery'],['systemLog','⌁','System Log'],['recaps','▣','Season Recap']];
   const nav=document.querySelector('.modulegrid');
   const oldHome=window.home;
@@ -158,245 +182,12 @@
   db.rpg.quests.forEach(q=>{q.type='Daily';q.donePeriods??=[];});
   const dayKey=()=>today();
   function weekKey(date=dayKey()){
-    const d=new Date(date+'T12:00:00');const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  }
-  /* Daily quests are one-time items, not recurring reminders. */
-  db.rpg.quests.forEach(q=>{q.completed=!!(q.completed||q.completedAt||(q.donePeriods||[]).length);q.createdAt??=today()});
-  function questActive(q){return !q.completed}
-  function questMarkup(q){
-    const done=!questActive(q);
-    return '<div class="rpgitem quest-row"><div class="row between"><b>'+esc2(q.name)+'</b><span class="tag">'+esc2(q.type)+'</span></div><div class="row between"><small class="rpgmuted">'+(done?'COMPLETED':'ACTIVE QUEST')+'</small><div class="row"><button class="btn '+(done?'':'gold')+'" '+(done?'disabled':'onclick="rpgQuestComplete(\''+q.id+'\')"')+'>'+(done?'✓ Complete':'Complete quest')+'</button><button class="btn danger" type="button" onclick="rpgQuestDelete(\''+q.id+'\')">Delete</button></div></div></div>';
-  }
-  window.rpgQuestDelete=function(id){
-    const q=db.rpg.quests.find(x=>x.id===id);if(!q)return;
-    if(!confirm('Delete quest "'+q.name+'"? This cannot be undone.'))return;
-    db.rpg.quests=db.rpg.quests.filter(x=>x.id!==id);save();render();
-  };
-  window.rpgQuestComplete=function(id){
-    const q=db.rpg.quests.find(x=>x.id===id);if(!q||!questActive(q))return;
-    q.completed=true;q.completedAt=today();
-    award('structured-quest:'+id,10,'Quest completed: '+q.name);
-    log('Quest cleared: '+q.name+'. The System is legally required to act impressed.','QUEST');
-    save();check();render();
-  };
-  function questPanel(){
-    const active=db.rpg.quests.filter(questActive);
-    const done=db.rpg.quests.filter(q=>!questActive(q));
-    const activeList=active.length?active.map(questMarkup).join(''):'<p class="rpgmuted">No active quests. Suspiciously peaceful.</p>';
-    const completedList=done.length?'<details class="rpgitem"><summary>Completed quests ('+done.length+')</summary>'+done.map(questMarkup).join('')+'</details>':'';
-    const addForm='<form id="structuredQuestForm" class="rpgitem"><h3>ADD ANOTHER QUEST</h3><label>Quest name</label><input name="name" required maxlength="100" placeholder="What needs doing?"><input type="hidden" name="type" value="Daily"><small class="rpgmuted">One-time daily to-do. Once completed, it stays completed.</small><button class="btn gold" type="submit">＋ Add quest</button><small class="rpgmuted">Add as many as you need. The form stays here after each one.</small></form>';
-    return panel('QUEST BOARD',activeList+completedList+addForm,'s12');
-  }
-  function systemAnnouncerPanel(){
+    const d=new Date(date+'T12:00:00');const day=(d.getDay()+6)%7;d.set  function systemAnnouncerPanel(){
     const events=db.rpg.log.slice(0,3);
     const latest=events[0];
     const fallback='THE SYSTEM IS WATCHING. Complete a quest, build a streak, defeat a boss, or unlock an achievement. It will have something to say about it.';
     const latestText=latest?(latest.broadcast||systemVoice(latest.msg,latest.type)) : fallback;
-    const feed=events.slice(1).map(e=>'<div class="system-feed-row"><span>'+esc2(e.broadcast||systemVoice(e.msg,e.type))+'</span><small>'+new Date(e.date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</small></div>').join('');
-    return '<section class="panel s12 system-announcer"><div class="system-announcer-head"><span class="system-pulse"></span><b>THE SYSTEM</b><small>LIVE TRANSMISSION</small></div><p class="system-announcer-message">'+esc2(latestText)+'</p>'+(latest?'<small class="rpgmuted">'+esc2(latest.msg)+' · '+new Date(latest.date).toLocaleString()+'</small>':'')+(feed?'<div class="system-feed">'+feed+'</div>':'')+'</section>';
+    const feed=events.slice(1).map(e=>'<div class="system-feed-row"><span>'+esc2(e.broadcast||systemVoice(e.msg,e.type))+'</span><small>'+new Date(e.date).toLocaleTimeString([],{hour:'2-digit',minute':'2-digit'})+'</small></div>').join('');
+    return '<section class="panel s12 system-announcer"><aside class="system-core-visual"><div class="system-core-glyph">◈</div><div class="system-core-label">SYSTEM CORE</div><div class="system-core-state">● ONLINE</div></aside><div class="system-announcer-content"><div class="system-announcer-head"><span class="system-pulse"></span><b>INCOMING TRANSMISSION</b><small>PRIORITY // LIVE</small></div><p class="system-announcer-message">'+esc2(latestText)+'</p>'+(latest?'<small class="rpgmuted">'+esc2(latest.msg)+' · '+new Date(latest.date).toLocaleString()+'</small>':'')+(feed?'<div class="system-feed">'+feed+'</div>':'')+'</div></section>';
   }
-  function dashboardDailyPanel(){
-    const quests=db.rpg.quests||[];
-    const active=quests.filter(questActive);
-    const completed=quests.length-active.length;
-    const structured=active.map(questMarkup).join('');
-    const progress=quests.length?'<small class="rpgmuted">'+active.length+' active · '+completed+' completed</small>':'';
-    const body=structured;
-    return panel('ACTIVE QUESTS',progress+(body||'<p class="rpgmuted">No active quests. Suspiciously peaceful. Add one on the Daily Page quest board.</p>'),'s12');
-  }
-  const previousHome=window.home;
-  window.home=function(){return systemAnnouncerPanel()+dashboardDailyPanel()+previousHome()};
-  const previousDaily=window.daily;
-  window.daily=function(){
-    let out=previousDaily();
-    out=out.replace(/<label>Hours of sleep<\/label><input[^>]*name="sleep"[^>]*>/,'');
-    const qHead=out.indexOf('<h3>QUEST LOG</h3>');
-    if(qHead>=0){const qStart=out.lastIndexOf('<section',qHead),qEnd=out.indexOf('</section>',qHead)+10;if(qStart>=0&&qEnd>qStart)out=out.slice(0,qStart)+questPanel()+out.slice(qEnd);}
-    return out;
-  };
-  /* Keep selected date stable and save to that exact date; never advance the page. */
-  window.dRec=function(){
-    const date=$id('dailyDate')?.value||window.ccSelectedDailyDate||today();
-    window.ccSelectedDailyDate=date;db.daily[date]??={};return db.daily[date];
-  };
-  window.saveDaily=function(){
-    const date=$id('dailyDate')?.value||window.ccSelectedDailyDate||today();
-    window.ccSelectedDailyDate=date;db.daily[date]??={};const d=db.daily[date];
-    document.querySelectorAll('#view input[name],#view textarea[name]').forEach(x=>{if(x.name!=='date'&&!x.closest('#structuredQuestForm'))d[x.name]=x.value});
-    d.schedule=[...document.querySelectorAll('#scheduleRows .row')].map(r=>({time:r.children[0].value,activity:r.children[1].value}));
-    save();alert('Daily record saved for '+date+'.');
-  };
-  const oldBindQuests=window.bind;
-  window.bind=function(){
-    oldBindQuests();
-    const f=$id('structuredQuestForm');
-    if(f)f.onsubmit=e=>{
-      e.preventDefault();const name=new FormData(f).get('name')?.toString().trim(),type=new FormData(f).get('type');
-      if(!name)return;
-      db.rpg.quests.push({id:crypto.randomUUID(),name,type,createdAt:today(),completed:false,donePeriods:[]});
-      log('New '+type.toLowerCase()+' quest registered: '+name+'. Try not to make it weird.','QUEST');
-      save();render();
-    };
-  };
-  /* A reliable book form and a compact finished-book card. */
-  window.addBook=function(){
-    const p=document.createElement('section');p.className='panel s12';
-    p.innerHTML='<h3>ADD TO LIBRARY</h3><form id="bookForm">'+
-      field('Book title','name')+field('Author','author')+field('Series / volume','series')+
-      field('Current page','pages','0','number')+field('Total pages','total','','number')+
-      '<label>Genre(s) — separate with commas</label><input name="genres" placeholder="Fantasy, LitRPG, Horror">'+
-      '<label>Shelf</label><select name="status">'+['Want to Read','Currently Reading','Finished','DNF'].map(x=>'<option>'+x+'</option>').join('')+'</select>'+
-      field('Rating (1–5)','rating','')+'<label>Cover art</label><input type="file" name="photo" accept="image/*">'+area('Review / notes','review')+
-      '<button class="btn gold" type="submit">Add book</button><button class="btn" type="button" onclick="render()">Cancel</button></form>';
-    $id('view').prepend(p);
-    $id('bookForm').onsubmit=e=>{
-      e.preventDefault();const f=e.currentTarget;if(!f.reportValidity())return;
-      const fd=new FormData(f),o={};['name','author','series','pages','total','status','rating','review'].forEach(k=>o[k]=String(fd.get(k)||''));
-      o.genres=String(fd.get('genres')||'').split(',').map(x=>x.trim()).filter(Boolean);
-      o.pages=Number(o.pages)||0;o.total=Number(o.total)||0;o.finishedDate=o.status==='Finished'?today():'';
-      const file=f.elements.photo.files?.[0];const done=()=>{db.books.push(o);save();check();render()};
-      if(file){const reader=new FileReader();reader.onload=()=>{o.photo=reader.result;done()};reader.onerror=()=>alert('The cover image could not be read. Try again without it.');reader.readAsDataURL(file)}else done();
-    };
-  };
-  const oldReadingPage=window.reading;
-  window.reading=function(){
-    let out=oldReadingPage();
-    out=out.replace(/<label>Current page \/ total<\/label>[\s\S]*?<small>[^<]*<\/small>/g,(block)=>block);
-    /* Hide page-tracking controls only on finished books; keep shelf/status and history. */
-    const temp=document.createElement('div');temp.innerHTML=out;
-    temp.querySelectorAll('.bookcard').forEach((card,i)=>{
-      const b=db.books[i];if(!b||b.status!=='Finished')return;
-      card.querySelectorAll('label,input, .chart, small').forEach(el=>{
-        if(el.closest('select'))return;
-        if(el.matches('label')&&el.textContent.includes('Reading status'))return;
-        if(el.matches('input')||el.matches('.chart')||el.matches('small')||el.textContent.includes('Current page'))el.remove();
-      });
-    });
-    return temp.innerHTML;
-  };
-  /* Symptom history and profile are read-only until the user presses Edit. */
-  window.petDetail=function(i){
-    const p=db.dogs[i];if(!p)return;const view=$id('view');
-    const profile='<div class="rpgitem"><div class="row between"><b>'+esc2(p.name)+' · PROFILE</b><button class="btn" type="button" onclick="togglePetEditor()">Edit profile</button></div><p>'+esc2(p.breed||'Breed not set')+' · '+esc2(p.age||'Age not set')+'</p><p>Weight: '+esc2(p.weight||'—')+'</p><p>Medications: '+esc2(p.medications||'—')+'</p><p>Allergies: '+esc2(p.allergies||'—')+'</p><p>'+esc2(p.notes||'No notes recorded.')+'</p><form id="petEdit" hidden><label>Name</label><input name="name" value="'+esc2(p.name)+'"><label>Breed</label><input name="breed" value="'+esc2(p.breed||'')+'"><label>Birthday / age</label><input name="age" value="'+esc2(p.age||'')+'"><label>Weight</label><input name="weight" value="'+esc2(p.weight||'')+'"><label>Medications</label><input name="medications" value="'+esc2(p.medications||'')+'"><label>Allergies</label><input name="allergies" value="'+esc2(p.allergies||'')+'"><label>Notes</label><textarea name="notes">'+esc2(p.notes||'')+'</textarea><button class="btn gold">Save profile</button><button class="btn" type="button" onclick="togglePetEditor()">Cancel</button></form></div>';
-    const history=(p.symptoms||[]).map((x,j)=>'<div class="rpgitem"><div class="row between"><b>'+esc2(x.symptom)+'</b><span class="tag">'+esc2(x.date||'No date')+' · '+esc2(x.severity||'')+'</span></div><p>'+esc2(x.kind||'')+' · '+esc2(x.duration||'')+'</p><p>'+esc2(x.notes||'')+'</p><button class="btn" type="button" onclick="editPetSymptom('+i+','+j+')">Edit entry</button><form id="petSym'+j+'" hidden><label>Symptom</label><input name="symptom" value="'+esc2(x.symptom)+'"><label>Date</label><input name="date" type="date" value="'+esc2(x.date||'')+'"><label>Severity</label><select name="severity">'+['Mild','Moderate','Severe','Emergency'].map(v=>'<option '+(x.severity===v?'selected':'')+'>'+v+'</option>').join('')+'</select><label>Type</label><input name="kind" value="'+esc2(x.kind||'')+'"><label>Duration</label><input name="duration" value="'+esc2(x.duration||'')+'"><label>Notes</label><textarea name="notes">'+esc2(x.notes||'')+'</textarea><button class="btn gold" type="button" onclick="savePetSymptom('+i+','+j+')">Save entry</button><button class="btn danger" type="button" onclick="deletePetSymptom('+i+','+j+')">Delete entry</button></form></div>').join('')||'<p class="rpgmuted">No symptom history yet.</p>';
-    view.innerHTML='<div class="row" style="margin:8px 0"><button class="btn" onclick="go(\'dogs\')">← BACK TO PETS</button></div><div class="grid">'+panel('PET PROFILE',profile,'s12')+panel('SYMPTOM HISTORY',history,'s12')+panel('LOG A SYMPTOM','<form id="newPetSym"><label>Symptom / issue</label><input name="symptom" required><label>Date</label><input name="date" type="date" value="'+today()+'"><label>Severity</label><select name="severity"><option>Mild</option><option>Moderate</option><option>Severe</option><option>Emergency</option></select><label>Type</label><select name="kind"><option>New symptom</option><option>Recurring issue</option><option>Resolved</option><option>Other observation</option></select><label>Duration / frequency</label><input name="duration"><label>Notes / possible triggers</label><textarea name="notes"></textarea><button class="btn gold">Save symptom</button></form>','s12')+'</div>';
-    $id('petEdit').onsubmit=e=>{e.preventDefault();Object.assign(p,Object.fromEntries(new FormData(e.currentTarget)));save();petDetail(i)};
-    $id('newPetSym').onsubmit=e=>{e.preventDefault();p.symptoms??=[];p.symptoms.push(Object.fromEntries(new FormData(e.currentTarget)));save();petDetail(i)};
-  };
-  window.togglePetEditor=function(){const f=$id('petEdit');if(f)f.hidden=!f.hidden};
-  window.editPetSymptom=function(i,j){const f=$id('petSym'+j);if(f)f.hidden=!f.hidden};
-  window.savePetSymptom=function(i,j){const f=$id('petSym'+j);if(!f)return;Object.assign(db.dogs[i].symptoms[j],Object.fromEntries(new FormData(f)));save();petDetail(i)};
-  window.deletePetSymptom=function(i,j){if(confirm('Delete this symptom entry?')){db.dogs[i].symptoms.splice(j,1);save();petDetail(i)}};
-  /* Distinct neon dungeon tiles and wrap-safe labels. */
-  style.textContent += `
-    .modulegrid button{min-width:0;min-height:112px;height:auto;padding:14px 10px;white-space:normal;overflow:visible}
-    .modulegrid button b{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.25;text-align:center}
-    .modulegrid button[onclick*="dungeon"]{background:linear-gradient(145deg,#3a164d,#15172e 75%);border-color:#ff3da6}
-    .modulegrid button[onclick*="trophies"]{background:linear-gradient(145deg,#46320b,#171b2b 75%);border-color:#eaff00}
-    .modulegrid button[onclick*="achievements"]{background:linear-gradient(145deg,#0c3b49,#111a2b 75%);border-color:#00eaff}
-    .modulegrid button[onclick*="systemLog"]{background:linear-gradient(145deg,#48202c,#111a2b 75%);border-color:#ff6b8a}
-    .modulegrid button[onclick*="recaps"]{background:linear-gradient(145deg,#153d2b,#111a2b 75%);border-color:#b7ff00}
-    .quest-row{margin:8px 0}.rpgitem summary{cursor:pointer;padding:4px}
-    #petEdit[hidden],form[hidden]{display:none!important}
-  `;
-  /* Rebind the original script's lexical renderer functions after the final RPG overrides. */
-  home=window.home;daily=window.daily;bind=window.bind;render=window.render;
-
-  /* Gold labels were duplicated by the first patch; replace the label once, in place. */
-  const dailyBeforeFix=window.daily;
-  window.daily=function(){
-    let out=dailyBeforeFix();
-    out=out.replace(/<label>Gold gained<\/label>/g,'<label>Gold gained ($)</label>').replace(/<label>Gold spent<\/label>/g,'<label>Gold spent ($)</label>');
-    out=out.replace(/<label>Gold gained \(\$\)<\/label><label>Gold gained \(\$\)<\/label>/g,'<label>Gold gained ($)</label>');
-    out=out.replace(/<label>Gold spent \(\$\)<\/label><label>Gold spent \(\$\)<\/label>/g,'<label>Gold spent ($)</label>');
-    return out;
-  };
-  /* Keep the lexical function bindings used by the original single-file renderer aligned. */
-  home=window.home;daily=window.daily;reading=window.reading;addBook=window.addBook;dRec=window.dRec;saveDaily=window.saveDaily;bind=window.bind;petDetail=window.petDetail;
-
-  /* STATUS EFFECT REGISTRY — private, on-device symptom and wellness journal. */
-  db.wellness=Array.isArray(db.wellness)?db.wellness:[];
-  if(!pages.some(p=>p[0]==='wellness'))pages.push(['wellness','✚','Status Effect Registry']);
-  function wellnessFields(x={}){
-    return '<label>Date</label><input type="date" name="date" required value="'+esc2(x.date||today())+'">'+
-      '<label>Symptom / status effect (optional)</label><input name="symptom" maxlength="100" value="'+esc2(x.symptom||'')+'" placeholder="Headache, nausea, fatigue...">'+
-      '<label>Severity</label><select name="severity">'+['None','Mild','Moderate','Severe'].map(v=>'<option '+((x.severity||'None')===v?'selected':'')+'>'+v+'</option>').join('')+'</select>'+
-      '<label>Mood</label><select name="mood">'+['Not recorded','Great','Good','Okay','Low','Anxious','Irritable','Overwhelmed'].map(v=>'<option '+((x.mood||'Not recorded')===v?'selected':'')+'>'+v+'</option>').join('')+'</select>'+
-      '<label>Energy (1–5)</label><select name="energy">'+['Not recorded','1','2','3','4','5'].map(v=>'<option '+((String(x.energy||'Not recorded'))===v?'selected':'')+'>'+v+'</option>').join('')+'</select>'+
-      '<label>Sleep (hours)</label><input name="sleep" type="number" min="0" max="24" step="0.5" value="'+esc2(x.sleep??'')+'" placeholder="e.g. 7.5">'+
-      '<label>Duration / frequency</label><input name="duration" maxlength="100" value="'+esc2(x.duration||'')+'" placeholder="A few hours, on and off...">'+
-      '<label>Possible triggers / context</label><input name="triggers" maxlength="250" value="'+esc2(x.triggers||'')+'" placeholder="Food, stress, activity, environment...">'+
-      '<label>Notes</label><textarea name="notes" maxlength="2000" placeholder="Anything else worth tracking">'+esc2(x.notes||'')+'</textarea>';
-  }
-  window.wellness=function(){
-    const entries=db.wellness.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    const history=entries.length?entries.map(x=>{
-      const i=db.wellness.indexOf(x);
-      return '<details class="rpgitem wellness-entry"><summary><b>'+esc2(x.date||'No date')+'</b> · '+esc2(x.symptom||'Wellness check-in')+' <span class="tag">'+esc2(x.severity||'None')+'</span></summary>'+
-        '<p class="rpgmuted">Mood: '+esc2(x.mood||'Not recorded')+' · Energy: '+esc2(x.energy||'Not recorded')+' · Sleep: '+esc2(x.sleep||'—')+' hrs</p>'+
-        (x.duration?'<p>Duration: '+esc2(x.duration)+'</p>':'')+(x.triggers?'<p>Possible triggers: '+esc2(x.triggers)+'</p>':'')+(x.notes?'<p>'+esc2(x.notes)+'</p>':'')+
-        '<form class="wellness-edit" onsubmit="saveWellness(event,'+i+')">'+wellnessFields(x)+'<div class="row"><button class="btn gold" type="submit">Save changes</button><button class="btn danger" type="button" onclick="deleteWellness('+i+')">Delete entry</button></div></form></details>';
-    }).join(''):'<p class="rpgmuted">No records yet. Your status log is blissfully empty. For now.</p>';
-    return '<div class="row between" style="margin:8px 0"><button class="btn" onclick="go(\'home\')">← BACK TO DASHBOARD</button><span class="tag">PRIVATE · THIS DEVICE</span></div>'+
-      '<div class="grid">'+panel('THE STATUS EFFECT REGISTRY','<p class="rpgmuted">Track symptoms, patterns and everyday wellness check-ins. No XP penalties, no judgment — just useful intel for future-you.</p><form id="wellnessForm" onsubmit="addWellness(event)">'+wellnessFields()+'<button class="btn gold" type="submit">＋ Log status report</button></form>','s6')+
-      panel('FIELD NOTES · '+entries.length+' RECORDS',history,'s6')+
-      panel('A NOTE FROM THE SYSTEM','<p class="rpgmuted">This is a personal tracking journal, not a diagnosis engine. Patterns can be useful to discuss with a qualified healthcare professional. Your entries are saved in this browser on this device.</p>','s12')+'</div>';
-  };
-  window.addWellness=function(e){
-    e.preventDefault();const f=e.currentTarget;if(!f.reportValidity())return;
-    const x=Object.fromEntries(new FormData(f));x.id=crypto.randomUUID();x.energy=x.energy==='Not recorded'?'':x.energy;x.mood=x.mood==='Not recorded'?'':x.mood;
-    db.wellness.push(x);save();render();
-  };
-  window.saveWellness=function(e,i){
-    e.preventDefault();const f=e.currentTarget;if(!f.reportValidity()||!db.wellness[i])return;
-    const x=Object.fromEntries(new FormData(f));x.id=db.wellness[i].id; x.energy=x.energy==='Not recorded'?'':x.energy;x.mood=x.mood==='Not recorded'?'':x.mood;
-    db.wellness[i]=x;save();render();
-  };
-  window.deleteWellness=function(i){
-    if(!db.wellness[i]||!confirm('Delete this wellness record?'))return;
-    db.wellness.splice(i,1);save();render();
-  };
-
-  /* Add the new wellness destination to the existing dashboard tile grid. */
-  const homeBeforeWellness=window.home;
-  window.home=function(){
-    const out=homeBeforeWellness();
-    const tile='<button class="module wellness-tile" data-id="wellness" onclick="go(\'wellness\')"><i>✚</i><b>STATUS EFFECTS</b></button>';
-    return out.replace(/(<div class="modulegrid">[\s\S]*?)(<\/div>)$/, '$1'+tile+'$2');
-  };
-  home=window.home;
-  style.textContent += '.wellness-tile{color:#00eaff!important;border-color:#ff2aa6!important;background:linear-gradient(155deg,#3b1640,#10152d 72%)!important;box-shadow:inset 0 0 28px #ff2aa622,0 0 12px #00eaff33!important}.wellness-entry{margin:8px 0;padding:10px;background:#090d1b;border:1px solid #284b66}.wellness-entry summary{cursor:pointer;line-height:1.7}.wellness-edit{border-top:1px solid #284b66;margin-top:10px;padding-top:8px}';
   
-  /* Money fields show a dollar prefix and accept cents, while storing numeric strings. */
-  function dollarInputs(html,name,expectedLabel){
-    const re=new RegExp('(<label>[^<]*<\\/label>)(<input name="'+name+'"[^>]*>)','g');
-    return html.replace(re,(all,label,input)=>{
-      const plain=label.replace(/<[^>]*>/g,'').trim();
-      if(expectedLabel && plain!==expectedLabel && plain!==expectedLabel+' ($)')return all;
-      if(!plain.endsWith('($)'))label=label.replace('</label>',' ($)</label>');
-      input=input.replace(/type="[^"]*"/,'type="number"').replace(/\sstep="[^"]*"/g,'').replace(/\smin="[^"]*"/g,'');
-      input=input.replace('<input ','<input step="0.01" min="0" inputmode="decimal" ');
-      return label+'<div class="money-field"><span>$</span>'+input+'</div>';
-    });
-  }
-  const moneyStyle=document.createElement('style');
-  moneyStyle.textContent='.money-field{display:flex;align-items:center;width:100%;background:#090d1b;border:1px solid #00dff077}.money-field>span{padding:0 0 0 10px;color:#f5ff00;font:700 13px system-ui}.money-field input{border:0!important;padding-left:6px!important;background:transparent!important;min-width:0}.money-field:focus-within{border-color:#ff2aa6;box-shadow:0 0 8px #ff2aa655}';
-  document.head.appendChild(moneyStyle);
-  const budgetBeforeMoney=window.budget;
-  window.budget=function(){return dollarInputs(budgetBeforeMoney(),'amount','Amount')};
-  const dailyBeforeMoney=window.daily;
-  window.daily=function(){let out=dailyBeforeMoney();out=dollarInputs(out,'moneyIn','Gold gained ($)');out=dollarInputs(out,'moneyOut','Gold spent ($)');return out};
-  daily=window.daily;
-
-  /* Final dashboard/nav guard: keep legacy tab navigation hidden and render current daily quests. */
-  const navGuard=$id('nav');
-  if(navGuard){navGuard.style.setProperty('display','none','important');navGuard.setAttribute('aria-hidden','true');}
-  /* The earlier home wrapper already adds THE SYSTEM and ACTIVE QUESTS. Do not add them twice. */
-  home=window.home;
-  /* Re-apply the nav rule after all page wrappers have been installed. */
-  if(navGuard)navGuard.style.setProperty('display','none','important');
-  /* Re-render after all late page overrides are installed so the first dashboard load includes today's quests. */
-  render();
-
-})();
