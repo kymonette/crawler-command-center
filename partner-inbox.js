@@ -21,7 +21,7 @@
       month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit"
     });
   };
-  const state = { client:null, user:null, messages:[], loading:false, error:"", note:"", unread:0 };
+  const state = { client:null, user:null, messages:[], loading:false, sending:false, error:"", note:"", unread:0 };
   const lastReadKey = () => "partner-inbox-last-read-" + (state.user?.id || "guest");
   let initialized = false;
 
@@ -164,7 +164,7 @@
             <label for="partnerInboxBody">Anything else on my heart? (optional)</label>
             <textarea id="partnerInboxBody" maxlength="3000" placeholder="Tell me more, send a love note, or just say what's on your mind…"></textarea>
             <input type="hidden" id="partnerInboxType" value="check_in">
-            <div class="partner-actions"><button class="btn gold" type="submit" ${state.loading ? "disabled" : ""}>Send my check-in 💌</button></div>
+            <div class="partner-actions"><button class="btn gold" id="partnerInboxSendButton" type="button" ${state.sending ? "disabled" : ""}>Send my check-in 💌</button></div>
           </form>
         </section>
         <section class="partner-compose"><div class="row between"><h3>Shared conversation</h3><span class="partner-small">${state.messages.length} messages</span></div>
@@ -264,7 +264,7 @@
       state.note = "";
       if (notice) { notice.style.display="block"; notice.className="partner-status error"; notice.textContent=message; }
     };
-    if (state.loading) return;
+    if (state.sending) return;
     const feeling = document.getElementById("partnerInboxFeeling")?.value || "";
     const need = document.getElementById("partnerInboxNeed")?.value || "";
     const appreciation = document.getElementById("partnerInboxAppreciation")?.value.trim() || "";
@@ -279,7 +279,7 @@
       showError("The message service isn't connected. Check your internet connection and refresh.");
       return;
     }
-    state.loading = true;
+    state.sending = true;
     const sendButton = event.submitter;
     if (sendButton) { sendButton.disabled = true; sendButton.textContent = "Sending…"; }
     try {
@@ -309,7 +309,7 @@
     } catch (e) {
       showError(e?.message || "Message could not be sent. Please try again.");
     } finally {
-      state.loading = false;
+      state.sending = false;
       if (typeof window.render === "function" && document.body.dataset.page === "partnerInbox") window.render();
     }
   };
@@ -337,6 +337,25 @@
 
   function install() {
     styles();
+    // Delegate the send click so it works reliably after planner page re-renders.
+    if (!window.__partnerInboxSendClickBound) {
+      document.addEventListener("click", function (event) {
+        const button = event.target.closest("#partnerInboxSendButton");
+        if (!button) return;
+        event.preventDefault();
+        if (typeof window.partnerInboxSend !== "function") {
+          const notice = document.getElementById("partnerInboxNotice");
+          if (notice) {
+            notice.style.display = "block";
+            notice.className = "partner-status error";
+            notice.textContent = "The send feature did not load. Refresh the planner and try again.";
+          }
+          return;
+        }
+        window.partnerInboxSend({ preventDefault() {}, submitter: button });
+      });
+      window.__partnerInboxSendClickBound = true;
+    }
     if (typeof window.go === "function" && !window.go.__partnerWrapped) {
       const originalGo = window.go;
       const wrappedGo = function (p) {
