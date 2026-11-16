@@ -38,22 +38,27 @@ input,textarea,select{border-color:#00dff066;background:#050914}label{color:#00d
 @media(max-width:560px){.mood-card{min-height:94px}.mood-name{font-size:10px}.weather-card{min-height:78px}.weather-card span{font-size:31px}.weather-card small{font-size:7px}}
 
 .work-calendar-legend{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px;font:700 9px system-ui;letter-spacing:.06em}.work-calendar-legend span{padding:4px 8px;border-radius:20px;border:1px solid currentColor}.legend-work{color:#37d9a0;background:#123b32}.legend-layoff{color:#ffad52;background:#4a2a18}.legend-overtime{color:#c18aff;background:#34204d}.work-daygrid .work-day-cell{min-height:68px;padding:5px 3px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;overflow:hidden}.work-daygrid .work-day-number{font:700 11px system-ui}.work-daygrid .day-status,.work-daygrid .day-hours,.work-daygrid .day-overtime{display:block;font:700 8px/1.15 system-ui;text-align:center;white-space:normal}.work-daygrid .work-day-cell.work-day{background:#103b31!important;border-color:#37d9a0!important;color:#d8fff0!important}.work-daygrid .work-day-cell.layoff-day{background:#482b1b!important;border-color:#ffad52!important;color:#ffe2bd!important}.work-daygrid .work-day-cell.overtime-day{box-shadow:inset 0 -3px 0 #c18aff!important}.work-daygrid .day-overtime{color:#dfc0ff!important;background:#452c62;border-radius:5px;padding:2px 4px}.work-daygrid .day-hours{color:#b9f7d9}.work-daygrid .layoff-day .day-status{color:#ffd09a}
-/* Featured System Notification console */
-.system-notification-panel{
+/* Featured dashboard System announcer — targets the live RPG transmission panel */
+.system-announcer{
   position:relative;overflow:hidden;
-  border:1px solid #00eaff;
-  background:linear-gradient(135deg,#17102c 0%,#101b32 48%,#090d1c 100%);
-  box-shadow:inset 0 0 28px #00eaff18,0 0 8px #00eaff55,0 0 22px #ff2aa622;
+  border:1px solid #00eaff!important;
+  background:linear-gradient(135deg,#17102c 0%,#101b32 48%,#090d1c 100%)!important;
+  box-shadow:inset 0 0 28px #00eaff18,0 0 8px #00eaff55,0 0 22px #ff2aa622!important;
   animation:systemConsolePulse 4s ease-in-out infinite;
 }
-.system-notification-panel:before{width:18px;height:18px;border-color:#f5ff00;filter:drop-shadow(0 0 5px #f5ff00)}
-.system-notification-panel:after{width:18px;height:18px;border-color:#00eaff;filter:drop-shadow(0 0 5px #00eaff)}
-.system-notification-panel h3{display:flex;align-items:center;gap:8px;color:#f5ff00;text-shadow:0 0 10px #f5ff0088}
-.system-notification-panel h3:before{content:"◈";font-size:18px;color:#00eaff;text-shadow:0 0 10px #00eaff}
-.system-notification-panel h3:after{content:"LIVE";margin-left:auto;padding:3px 7px;border:1px solid #ff2aa6;border-radius:3px;color:#ff75c9;font:700 9px Orbitron, sans-serif;letter-spacing:.14em;box-shadow:0 0 9px #ff2aa655}
-.system-notification-panel p{color:#e2faff!important;font-size:13px;letter-spacing:.025em}
+.system-announcer:before{border-color:#f5ff00!important;filter:drop-shadow(0 0 5px #f5ff00)}
+.system-announcer:after{border-color:#00eaff!important;filter:drop-shadow(0 0 5px #00eaff)}
+.system-announcer-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.system-announcer-head b{color:#ff55bd!important;text-shadow:0 0 10px #ff2aa688;letter-spacing:.14em}
+.system-announcer-head small{margin-left:auto;color:#00eaff!important;font:700 10px Orbitron,sans-serif;letter-spacing:.16em;text-shadow:0 0 9px #00eaff88}
+.system-announcer .system-announcer-message{color:#e8f7ff!important;font-size:17px;font-weight:800;line-height:1.55}
+.system-announcer .rpgmuted{color:#9eafc2!important}
+.system-announcer .system-feed{border-top:1px solid #00eaff55;margin-top:14px;padding-top:10px}
+.system-announcer .system-feed-row{border-bottom:1px solid #34516a;padding:9px 0;color:#b8c9d8}
+.system-announcer .system-feed-row:last-child{border-bottom:0}
+.system-announcer .system-feed-row small{color:#00eaff!important}
 @keyframes systemConsolePulse{0%,100%{box-shadow:inset 0 0 28px #00eaff18,0 0 8px #00eaff44,0 0 18px #ff2aa61c}50%{box-shadow:inset 0 0 32px #00eaff2a,0 0 13px #00eaff88,0 0 25px #ff2aa644}}
-@media(prefers-reduced-motion:reduce){.system-notification-panel{animation:none}}
+@media(prefers-reduced-motion:reduce){.system-announcer{animation:none}}
 
 </style></head><body><div class="top"><span id="topGreeting">GOOD MORNING, CRAWLER</span><b>THE SYSTEM IS WATCHING</b><span id="clock"></span></div><div class="wrap"><div class="hero"><div><div class="eyebrow" id="greet">GOOD AFTERNOON, CRAWLER</div><h1 id="title">GOOD MORNING, CRAWLER</h1><div class="muted" id="dateLabel"></div></div><button class="btn" onclick="go('settings')">⚙ Settings</button></div><div class="bar"><span id="xp"></span></div><div class="barlabel"><span>DAILY XP</span><span id="xptext">0 / 100</span></div><nav id="nav" style="display:none!important" aria-hidden="true"></nav><main id="view"></main><div class="foot">LOCAL CRAWLER RECORDS · EXPORT BACKUPS REGULARLY · THE SYSTEM</div></div>
 <script>
