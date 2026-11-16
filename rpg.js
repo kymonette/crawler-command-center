@@ -445,7 +445,7 @@
   window.toggleScratch=function(i,v){const x=db.rpg.scratchPad[i];if(!x)return;x.done=!!v;save();render()};
   window.deleteScratch=function(i){if(!db.rpg.scratchPad[i])return;if(!confirm('Delete this list item?'))return;db.rpg.scratchPad.splice(i,1);save();render()};
   const homeBeforeScratch=window.home;
-  window.home=function(){let out=homeBeforeScratch();const tile='<button class="module scratch-tile" data-id="scratchpad" onclick="go(\'scratchpad\')"><i>✎</i><b>CRAWLER\'S SCRATCH PAD</b><small>OPEN MODULE</small></button>';return out.replace(/(<div class="modulegrid">[\\s\\S]*?)(<\\/div>)$/, '$1'+tile+'$2')};
+  window.home=function(){let out=homeBeforeScratch();const tile='<button class="module scratch-tile" data-id="scratchpad" onclick="go(\'scratchpad\')"><i>✎</i><b>CRAWLER\'S SCRATCH PAD</b><small>OPEN MODULE</small></button>';const start=out.lastIndexOf('<div class="modulegrid">');const end=start<0?-1:out.indexOf('</div>',start);return start>=0&&end>=0?out.slice(0,end)+tile+out.slice(end):out+tile};
   const renderBeforeScratch=window.render;
   window.render=function(){if(page==='scratchpad'){$id('view').innerHTML=window.scratchpad();return}renderBeforeScratch()};
   home=window.home;render=window.render;
