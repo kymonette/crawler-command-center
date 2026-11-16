@@ -21,7 +21,7 @@
       month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit"
     });
   };
-  const state = { client:null, user:null, messages:[], loading:false, sending:false, error:"", note:"", unread:0 };
+  const state = { client:null, user:null, messages:[], loading:false, sending:false, composeOpen:true, error:"", note:"", unread:0 };
   const lastReadKey = () => "partner-inbox-last-read-" + (state.user?.id || "guest");
   let initialized = false;
 
@@ -126,47 +126,8 @@
         <div class="partner-message-body">${esc(String(m.body || "").replace(/\\n/g, "\n"))}</div>
       </article>`;
     }).join("");
-    return `
-      <div class="partner-page">
-        <section class="partner-hero"><h2>${title}</h2><p>${subtitle}</p><div class="partner-actions"><span class="partner-small">Signed in as ${esc(state.user.email)}</span><button class="btn" onclick="window.partnerInboxRefresh()">↻ Refresh</button><button class="btn" onclick="window.partnerInboxSignOut()">Sign out</button></div></section>
-        <div id="partnerInboxNotice" class="partner-status" ${state.error ? "" : "style=\"display:none\""}>${esc(state.error || state.note)}</div>
-        <section class="partner-compose">
-          <h3>A little check-in 💛</h3>
-          <p class="partner-small">A small way to let each other in. Honest answers are welcome; there's no wrong answer.</p>
-          <form onsubmit="window.partnerInboxSend(event)">
-            <label for="partnerInboxFeeling">How are you feeling today?</label>
-            <select id="partnerInboxFeeling" required>
-              <option value="">Choose what fits best…</option>
-              <option>Pretty good — feeling connected</option>
-              <option>Okay, just taking the day as it comes</option>
-              <option>Stressed or overwhelmed</option>
-              <option>Sad or a little low</option>
-              <option>Anxious or unsettled</option>
-              <option>Tired and needing some quiet</option>
-              <option>Disconnected and could use closeness</option>
-              <option>Not sure yet</option>
-            </select>
-            <label for="partnerInboxNeed">What do you need from me today?</label>
-            <select id="partnerInboxNeed" required>
-              <option value="">Choose what would help…</option>
-              <option>A little reassurance</option>
-              <option>Affection or a reminder that we're okay</option>
-              <option>Someone to listen — no fixing</option>
-              <option>Practical help or a hand with something</option>
-              <option>Quality time and attention</option>
-              <option>Patience and a little extra understanding</option>
-              <option>Space, but still knowing we're connected</option>
-              <option>Help figuring out what I need</option>
-              <option>Nothing specific — just wanted to check in</option>
-            </select>
-            <label for="partnerInboxAppreciation">One thing I appreciate about you today (optional)</label>
-            <input id="partnerInboxAppreciation" maxlength="240" placeholder="Something you did, a little thing, or just you…">
-            <label for="partnerInboxBody">Anything else on my heart? (optional)</label>
-            <textarea id="partnerInboxBody" maxlength="3000" placeholder="Tell me more, send a love note, or just say what's on your mind…"></textarea>
-            <input type="hidden" id="partnerInboxType" value="check_in">
-            <div class="partner-actions"><button class="btn gold" id="partnerInboxSendButton" type="button" ${state.sending ? "disabled" : ""}>Send my check-in 💌</button></div>
-          </form>
-        </section>
+    const composeSection = state.composeOpen ? `
+        ${composeSection}
         <section class="partner-compose"><div class="row between"><h3>Shared conversation</h3><span class="partner-small">${state.messages.length} messages</span></div>
           <div class="partner-thread">${messages || '<div class="partner-empty">No messages yet. You can start the conversation.</div>'}</div>
         </section>
@@ -299,19 +260,37 @@
         pair_id:PAIR_ID, sender_id:state.user.id, body, message_type
       });
       if (error) throw error;
+
+      // Confirm the new row can be fetched into the shared conversation before showing success.
+      await loadMessages();
+      if (state.error) {
+        throw new Error("Your message was submitted, but I couldn't verify it in Shared Conversation. Tap Refresh before trying to send it again.");
+      }
+      const appearsInHistory = state.messages.some(m => m.sender_id === state.user.id && m.body === body);
+      if (!appearsInHistory) {
+        throw new Error("Your message may have been submitted, but it isn't showing in Shared Conversation. Tap Refresh and check before sending it again.");
+      }
+
       document.getElementById("partnerInboxBody").value = "";
       document.getElementById("partnerInboxFeeling").value = "";
       document.getElementById("partnerInboxNeed").value = "";
       document.getElementById("partnerInboxAppreciation").value = "";
-      state.note = "Your check-in has been sent. 💛";
+      state.note = "";
       state.error = "";
-      await loadMessages();
+      state.composeOpen = false;
     } catch (e) {
       showError(e?.message || "Message could not be sent. Please try again.");
     } finally {
       state.sending = false;
       if (typeof window.render === "function" && document.body.dataset.page === "partnerInbox") window.render();
     }
+  };
+
+  window.partnerInboxCompose = function () {
+    state.composeOpen = true;
+    state.error = "";
+    state.note = "";
+    window.render();
   };
 
   window.partnerInboxRefresh = async function () {
