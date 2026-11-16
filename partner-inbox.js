@@ -203,10 +203,28 @@
 
   async function refresh() {
     await loadMessages();
-    if (typeof window.render === "function" && (window.page === "partnerInbox" || document.body.dataset.page === "partnerInbox")) {
-      window.render();
-    } else if (document.getElementById("view") && document.body.dataset.page === "partnerInbox") {
-      document.getElementById("view").innerHTML = pageHtml();
+    if (document.body.dataset.page !== "partnerInbox") return;
+    const view = document.getElementById("view");
+    if (!view) return;
+
+    // Update only the conversation area. Re-rendering the whole planner every
+    // 15 seconds steals focus from the check-in fields while someone is typing.
+    const fresh = document.createElement("div");
+    fresh.innerHTML = pageHtml();
+    const currentThread = view.querySelector(".partner-thread");
+    const freshThread = fresh.querySelector(".partner-thread");
+    if (currentThread && freshThread) currentThread.innerHTML = freshThread.innerHTML;
+
+    const currentCount = view.querySelector(".partner-compose .row .partner-small");
+    const freshCount = fresh.querySelector(".partner-compose .row .partner-small");
+    if (currentCount && freshCount) currentCount.textContent = freshCount.textContent;
+
+    const currentNotice = view.querySelector("#partnerInboxNotice");
+    const freshNotice = fresh.querySelector("#partnerInboxNotice");
+    if (currentNotice && freshNotice && state.error) {
+      currentNotice.style.display = "block";
+      currentNotice.className = "partner-status error";
+      currentNotice.textContent = state.error;
     }
   }
 
