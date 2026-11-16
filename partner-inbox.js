@@ -171,7 +171,7 @@
     return `
       <div class="partner-page">
         <section class="partner-hero"><h2>${title}</h2><p>${subtitle}</p><div class="partner-actions"><span class="partner-small">Signed in as ${esc(state.user.email)}</span><button class="btn" onclick="window.partnerInboxRefresh()">↻ Refresh</button><button class="btn" onclick="window.partnerInboxSignOut()">Sign out</button></div></section>
-        <div id="partnerInboxNotice" class="partner-status" ${state.error ? "" : "style=\\"display:none\\""}>${esc(state.error || state.note)}</div>
+        <div id="partnerInboxNotice" class="partner-status \${state.error ? "error" : ""}" \${state.error ? "" : "style=\"display:none\""}>\${esc(state.error || state.note)}</div>
         ${composeSection}
         <section class="partner-compose"><div class="row between"><h3>Shared conversation</h3><span class="partner-small">${state.messages.length} messages</span></div>
           <div class="partner-thread">${messages || '<div class="partner-empty">No messages yet. You can start the conversation.</div>'}</div>
