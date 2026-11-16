@@ -60,7 +60,7 @@
   }
   async function initPanel(){
     if(initialized)return; initialized=true;
-    try { await getAuth(); if(!currentUser){status("Sign in through Partner Inbox on this planner first. Notifications are tied to that account.",true);document.getElementById("plannerReminderList").innerHTML='<p class="muted">Sign in to manage reminders.</p>';return;} await loadReminders(); }
+    try { await getAuth(); if(!currentUser){status("Sign in through Partner Inbox on this planner first. Notifications are tied to that account.",true);document.getElementById("plannerReminderList").innerHTML='<p class="muted">Sign in to manage reminders.</p>';return;} await syncExistingPushSubscription(); await loadReminders(); await loadAutoPrefs(); }
     catch(e){status(e.message||"Could not load notification settings.",true);}
   }
   const AUTO_CATEGORIES = ["morning","habits","evening","weekly"];
@@ -101,6 +101,15 @@
     const el=document.getElementById("plannerReminderList");if(!el)return;
     if(!data?.length){el.innerHTML='<p class="muted">No reminders yet.</p>';return;}
     el.innerHTML=data.map(r=>`<div class="planner-reminder"><div><b>${esc(r.title)}</b><div class="muted">${esc(r.body||"")}</div><small>${new Date(r.next_run_at||r.scheduled_at).toLocaleString()} · ${r.repeat_rule==="none"?"One time":r.repeat_rule}</small></div><button class="btn danger" type="button" onclick="plannerDeleteReminder('${r.id}')">Delete</button></div>`).join("");
+  }
+  async function syncExistingPushSubscription(){
+    if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window)||Notification.permission!=="granted")return;
+    const {client,user}=await getAuth();if(!user)return;
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();if(!sub)return;
+    const j=sub.toJSON();
+    const {error}=await client.from("planner_push_subscriptions").upsert({user_id:user.id,planner:PLANNER,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth_secret:j.keys.auth,user_agent:navigator.userAgent,updated_at:new Date().toISOString()},{onConflict:"user_id,planner,endpoint"});
+    if(error)throw error;
   }
   async function enablePush(){
     try{
