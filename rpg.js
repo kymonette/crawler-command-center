@@ -423,4 +423,32 @@
   /* Re-render after all late page overrides are installed so the first dashboard load includes today's quests. */
   render();
 
+
+  /* CRAWLER'S SCRATCH PAD — quick categorized reminders, persisted with the planner backup. */
+  db.rpg.scratchPad=Array.isArray(db.rpg.scratchPad)?db.rpg.scratchPad:[];
+  if(!pages.some(p=>p[0]==='scratchpad'))pages.push(['scratchpad','✎',"Crawler's Scratch Pad"]);
+  const scratchLists=['Shopping','Packing','Errands','Work','Ideas','Other'];
+  window.scratchpad=function(){
+    const items=db.rpg.scratchPad;
+    const pending=items.filter(x=>!x.done).length;
+    const grouped=scratchLists.map(name=>{
+      const rows=items.map((x,i)=>({...x,_i:i})).filter(x=>x.list===name);
+      if(!rows.length)return '';
+      return '<div class="scratch-group"><h4>'+esc2(name)+'</h4>'+rows.map(x=>'<div class="scratch-row"><label><input type="checkbox" '+(x.done?'checked':'')+' onchange="toggleScratch('+x._i+',this.checked)"><span class="'+(x.done?'scratch-done':'')+'">'+esc2(x.text)+'</span></label><button class="btn danger scratch-delete" type="button" onclick="deleteScratch('+x._i+')" aria-label="Delete item">×</button></div>').join('')+'</div>';
+    }).join('');
+    return '<div class="row" style="margin:8px 0 14px"><button class="btn" onclick="go(\'home\')">← BACK TO DASHBOARD</button></div>'+
+      '<div class="grid"><section class="panel s12 scratch-panel"><h3>ADD TO A LIST</h3><form id="scratchForm" onsubmit="addScratch(event)"><label>WHAT DO YOU NEED TO REMEMBER?</label><input name="text" maxlength="240" required placeholder="An item, reminder or something to bring"><label>LIST</label><select name="list">'+scratchLists.map(x=>'<option>'+x+'</option>').join('')+'</select><button class="btn gold" type="submit">ADD ITEM</button></form></section>'+
+      '<section class="panel s12 scratch-panel"><h3>PERSONAL ORGANIZER</h3><p class="rpgmuted">A practical place for shopping, packing, errands, work reminders and ideas. No pretend game inventory.</p><div class="big">'+pending+'</div><p class="rpgmuted">Items still to do</p></section>'+
+      '<section class="panel s12 scratch-panel"><h3>YOUR LISTS</h3>'+(grouped||'<p class="rpgmuted">No list items yet.</p>')+'</section></div>';
+  };
+  window.addScratch=function(e){e.preventDefault();const f=e.currentTarget;if(!f.reportValidity())return;const o=Object.fromEntries(new FormData(f));db.rpg.scratchPad.push({id:crypto.randomUUID(),text:o.text.trim(),list:o.list,done:false,createdAt:new Date().toISOString()});save();render()};
+  window.toggleScratch=function(i,v){const x=db.rpg.scratchPad[i];if(!x)return;x.done=!!v;save();render()};
+  window.deleteScratch=function(i){if(!db.rpg.scratchPad[i])return;if(!confirm('Delete this list item?'))return;db.rpg.scratchPad.splice(i,1);save();render()};
+  const homeBeforeScratch=window.home;
+  window.home=function(){let out=homeBeforeScratch();const tile='<button class="module scratch-tile" data-id="scratchpad" onclick="go(\'scratchpad\')"><i>✎</i><b>CRAWLER\'S SCRATCH PAD</b><small>OPEN MODULE</small></button>';return out.replace(/(<div class="modulegrid">[\\s\\S]*?)(<\\/div>)$/, '$1'+tile+'$2')};
+  const renderBeforeScratch=window.render;
+  window.render=function(){if(page==='scratchpad'){$id('view').innerHTML=window.scratchpad();return}renderBeforeScratch()};
+  home=window.home;render=window.render;
+  style.textContent += '.scratch-panel{padding:16px!important;margin-bottom:8px}.scratch-panel h3{margin-top:0}.scratch-panel input,.scratch-panel select{width:100%;box-sizing:border-box}.scratch-panel .big{font-size:42px;margin:8px 0}.scratch-group{margin:12px 0;padding:10px;border:1px solid #00dff044;background:#070b17}.scratch-group h4{margin:0 0 8px;color:#00eaff;font:700 12px Orbitron,sans-serif;letter-spacing:.12em}.scratch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid #29445b}.scratch-row:last-child{border-bottom:0}.scratch-row label{display:flex;align-items:center;gap:10px;min-width:0;flex:1;color:#e8f7ff}.scratch-row input[type=checkbox]{width:20px;min-width:20px;height:20px;accent-color:#00eaff}.scratch-done{text-decoration:line-through;opacity:.55}.scratch-delete{padding:4px 10px;min-width:34px}.scratch-tile{color:#00eaff!important;border-color:#f5ff00!important;background:linear-gradient(155deg,#34300a,#10152d 72%)!important;box-shadow:inset 0 0 28px #f5ff0018,0 0 12px #00eaff33!important}';
+
 })();
