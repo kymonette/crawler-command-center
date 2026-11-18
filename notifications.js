@@ -163,6 +163,9 @@
   window.plannerSaveReminder=saveReminder;
   window.plannerRefreshReminders=async()=>{try{await loadReminders();status("Reminders refreshed.");}catch(e){status(e.message,true);}};
   window.plannerDeleteReminder=deleteReminder;
+  // Register this device on planner startup, not only when the notifications panel is opened.
+  // This keeps scheduled alerts working even when the user never visits notification settings.
+  setTimeout(()=>syncExistingPushSubscription().catch(e=>console.warn("[DCC notifications] background registration failed:",e)),1200);
   const style=document.createElement("style");style.textContent=`
     .planner-notify-panel{border-color:${accent};}
     .planner-notify-status{padding:10px;margin:8px 0;background:#15332e;color:#baf6dc;border:1px solid #368b72;border-radius:8px;font:12px system-ui}
