@@ -426,8 +426,10 @@
 
   /* CRAWLER'S SCRATCH PAD — quick categorized reminders, persisted with the planner backup. */
   db.rpg.scratchPad=Array.isArray(db.rpg.scratchPad)?db.rpg.scratchPad:[];
+  db.rpg.scratchNotes=Array.isArray(db.rpg.scratchNotes)?db.rpg.scratchNotes:[];
   if(!pages.some(p=>p[0]==='scratchpad'))pages.push(['scratchpad','✎',"Crawler's Scratch Pad"]);
   const scratchLists=['Shopping','Packing','Errands','Work','Ideas','Other'];
+  let activeScratchNote=null;
   window.scratchpad=function(){
     const items=db.rpg.scratchPad;
     const pending=items.filter(x=>!x.done).length;
@@ -439,8 +441,13 @@
     return '<div class="row" style="margin:8px 0 14px"><button class="btn" onclick="go(\'home\')">← BACK TO DASHBOARD</button></div>'+
       '<div class="grid"><section class="panel s12 scratch-panel"><h3>ADD TO A LIST</h3><form id="scratchForm" onsubmit="addScratch(event)"><label>WHAT DO YOU NEED TO REMEMBER?</label><input name="text" maxlength="240" required placeholder="An item, reminder or something to bring"><label>LIST</label><select name="list">'+scratchLists.map(x=>'<option>'+x+'</option>').join('')+'</select><button class="btn gold" type="submit">ADD ITEM</button></form></section>'+
       '<section class="panel s12 scratch-panel"><h3>PERSONAL ORGANIZER</h3><p class="rpgmuted">A practical place for shopping, packing, errands, work reminders and ideas. No pretend game inventory.</p><div class="big">'+pending+'</div><p class="rpgmuted">Items still to do</p></section>'+
-      '<section class="panel s12 scratch-panel"><h3>YOUR LISTS</h3>'+(grouped||'<p class="rpgmuted">No list items yet.</p>')+'</section></div>';
+      '<section class="panel s12 scratch-panel"><h3>YOUR LISTS</h3>'+(grouped||'<p class="rpgmuted">No list items yet.</p>')+'</section>'+
+      '<section class="panel s12 scratch-panel"><h3>CRAWLER NOTES</h3><p class="rpgmuted">Long-form notes, plans, ideas, and anything worth keeping. These are saved separately from your quick lists.</p><form id="scratchNoteForm" onsubmit="saveScratchNote(event)"><label>NOTE TITLE</label><input name="title" maxlength="140" required value="'+esc2(db.rpg.scratchNotes.find(x=>x.id===activeScratchNote)?.title||'')+'" placeholder="Give your note a title"><label>NOTE</label><textarea name="body" rows="14" style="min-height:280px;resize:vertical;white-space:pre-wrap" placeholder="Write as much as you need…">'+esc2(db.rpg.scratchNotes.find(x=>x.id===activeScratchNote)?.body||'')+'</textarea><div class="row"><button class="btn gold" type="submit">'+(activeScratchNote?'SAVE CHANGES':'SAVE NOTE')+'</button>'+(activeScratchNote?'<button class="btn" type="button" onclick="newScratchNote()">NEW NOTE</button>':'')+'</div></form><div class="scratch-notes-list"><h4>SAVED NOTES · '+db.rpg.scratchNotes.length+'</h4>'+(db.rpg.scratchNotes.slice().sort((a,b)=>(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||'')).map(n=>'<article class="scratch-note"><div><b>'+esc2(n.title||'Untitled note')+'</b><small class="rpgmuted">Updated '+new Date(n.updatedAt||n.createdAt||Date.now()).toLocaleDateString()+'</small><p>'+esc2((n.body||'').slice(0,260))+(String(n.body||'').length>260?'…':'')+'</p></div><div class="row"><button class="btn" type="button" onclick="editScratchNote(\''+n.id+'\')">OPEN</button><button class="btn danger" type="button" onclick="deleteScratchNote(\''+n.id+'\')">DELETE</button></div></article>').join('')||'<p class="rpgmuted">No notes saved yet.</p>')+'</div></section></div>';
   };
+  window.saveScratchNote=function(e){e.preventDefault();const f=e.currentTarget;if(!f.reportValidity())return;const data={title:f.title.value.trim(),body:f.body.value,updatedAt:new Date().toISOString()};if(activeScratchNote){const n=db.rpg.scratchNotes.find(x=>x.id===activeScratchNote);if(n)Object.assign(n,data);else db.rpg.scratchNotes.unshift({id:crypto.randomUUID(),createdAt:data.updatedAt,...data});}else db.rpg.scratchNotes.unshift({id:crypto.randomUUID(),createdAt:data.updatedAt,...data});activeScratchNote=null;save();render()};
+  window.editScratchNote=function(id){if(!db.rpg.scratchNotes.some(x=>x.id===id))return;activeScratchNote=id;render()};
+  window.newScratchNote=function(){activeScratchNote=null;render()};
+  window.deleteScratchNote=function(id){if(!confirm('Delete this note permanently?'))return;db.rpg.scratchNotes=db.rpg.scratchNotes.filter(x=>x.id!==id);if(activeScratchNote===id)activeScratchNote=null;save();render()};
   window.addScratch=function(e){e.preventDefault();const f=e.currentTarget;if(!f.reportValidity())return;const o=Object.fromEntries(new FormData(f));db.rpg.scratchPad.push({id:crypto.randomUUID(),text:o.text.trim(),list:o.list,done:false,createdAt:new Date().toISOString()});save();render()};
   window.toggleScratch=function(i,v){const x=db.rpg.scratchPad[i];if(!x)return;x.done=!!v;save();render()};
   window.deleteScratch=function(i){if(!db.rpg.scratchPad[i])return;if(!confirm('Delete this list item?'))return;db.rpg.scratchPad.splice(i,1);save();render()};
@@ -449,6 +456,9 @@
   const renderBeforeScratch=window.render;
   window.render=function(){if(page==='scratchpad'){$id('view').innerHTML=window.scratchpad();return}renderBeforeScratch()};
   home=window.home;render=window.render;
+  const scratchNoteStyle=document.createElement('style');
+  scratchNoteStyle.textContent='.scratch-notes-list{margin-top:18px}.scratch-note{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:12px 0;border-top:1px solid #34304b}.scratch-note>div:first-child{min-width:0;flex:1}.scratch-note small{display:block;margin-top:4px}.scratch-note p{white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.5 system-ui;color:#d7d4e6;margin:8px 0 0}.scratch-note .row{flex-shrink:0}@media(max-width:560px){.scratch-note{flex-direction:column}.scratch-note .row{width:100%}}';
+  document.head.appendChild(scratchNoteStyle);
   /* Preserve the original tile artwork size; only let long labels wrap cleanly. */
   style.textContent += '.modulegrid .module{box-sizing:border-box;min-width:0;overflow:hidden}.modulegrid .module b{display:block;width:100%;max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.2;text-align:center;letter-spacing:.025em;font-size:clamp(9px,2.6vw,12px);padding:0 3px;box-sizing:border-box}';
 
