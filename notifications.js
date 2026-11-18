@@ -102,18 +102,32 @@
     if(!data?.length){el.innerHTML='<p class="muted">No reminders yet.</p>';return;}
     el.innerHTML=data.map(r=>`<div class="planner-reminder"><div><b>${esc(r.title)}</b><div class="muted">${esc(r.body||"")}</div><small>${new Date(r.next_run_at||r.scheduled_at).toLocaleString()} · ${r.repeat_rule==="none"?"One time":r.repeat_rule}</small></div><button class="btn danger" type="button" onclick="plannerDeleteReminder('${r.id}')">Delete</button></div>`).join("");
   }
+  async function registerPushSubscription(client,user,reg,{repairStale=true}={}){
+    let sub=await reg.pushManager.getSubscription();
+    if(sub && repairStale){
+      const current=sub.toJSON();
+      // The dispatcher removes endpoints rejected by the push service (404/410).
+      // If the browser still holds that endpoint, replace it instead of re-registering it.
+      const {data:known,error:lookupError}=await client.from("planner_push_subscriptions").select("id").eq("user_id",user.id).eq("planner",PLANNER).eq("endpoint",current.endpoint).maybeSingle();
+      if(lookupError)throw lookupError;
+      if(!known){
+        await sub.unsubscribe();
+        sub=null;
+      }
+    }
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(PUBLIC_KEY)});
+    const j=sub.toJSON();
+    if(!j.endpoint||!j.keys?.p256dh||!j.keys?.auth)throw new Error("The browser created an incomplete push subscription. Please try again.");
+    const {data,error}=await client.from("planner_push_subscriptions").upsert({user_id:user.id,planner:PLANNER,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth_secret:j.keys.auth,user_agent:navigator.userAgent,updated_at:new Date().toISOString()},{onConflict:"user_id,planner,endpoint"}).select("id").single();
+    if(error)throw error;
+    if(!data?.id)throw new Error("The push subscription was not confirmed by the server.");
+    return data.id;
+  }
   async function syncExistingPushSubscription(){
     if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window)||Notification.permission!=="granted")return false;
     const {client,user}=await getAuth();if(!user)return false;
     const reg=await navigator.serviceWorker.ready;
-    let sub=await reg.pushManager.getSubscription();
-    // Permission can remain granted even after the browser-side subscription disappears.
-    // Recreate it instead of silently leaving this planner unregistered.
-    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(PUBLIC_KEY)});
-    const j=sub.toJSON();
-    if(!j.endpoint||!j.keys?.p256dh||!j.keys?.auth)throw new Error("The browser created an incomplete push subscription. Re-enable notifications for this planner.");
-    const {error}=await client.from("planner_push_subscriptions").upsert({user_id:user.id,planner:PLANNER,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth_secret:j.keys.auth,user_agent:navigator.userAgent,updated_at:new Date().toISOString()},{onConflict:"user_id,planner,endpoint"});
-    if(error)throw error;
+    await registerPushSubscription(client,user,reg);
     return true;
   }
   async function enablePush(){
@@ -122,12 +136,8 @@
       const {client,user}=await getAuth();if(!user)throw new Error("Sign in through Partner Inbox on this planner first.");
       const permission=await Notification.requestPermission();if(permission!=="granted")throw new Error("Notification permission was not granted. Allow it in Android app settings.");
       const reg=await navigator.serviceWorker.ready;
-      let sub=await reg.pushManager.getSubscription();
-      if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(PUBLIC_KEY)});
-      const j=sub.toJSON();
-      const {error}=await client.from("planner_push_subscriptions").upsert({user_id:user.id,planner:PLANNER,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth_secret:j.keys.auth,user_agent:navigator.userAgent,updated_at:new Date().toISOString()},{onConflict:"user_id,planner,endpoint"});
-      if(error)throw error;
-      status("Phone notifications are enabled for this planner on this device.");
+      await registerPushSubscription(client,user,reg);
+      status("Phone notification registration was confirmed. The next scheduled alert will verify delivery.");
     }catch(e){status(e.message||"Could not enable notifications.",true);}
   }
   async function saveReminder(event){
