@@ -143,7 +143,7 @@
               <option>Not sure yet</option>
             </select>
             <label for="partnerInboxNeed">What do you need from me today?</label>
-            <select id="partnerInboxNeed" required>
+            <select id="partnerInboxNeed" required onchange="window.partnerInboxToggleOtherNeed()">
               <option value="">Choose what would help…</option>
               <option>A little reassurance</option>
               <option>Affection or a reminder that we're okay</option>
@@ -154,7 +154,12 @@
               <option>Space, but still knowing we're connected</option>
               <option>Help figuring out what I need</option>
               <option>Nothing specific — just wanted to check in</option>
+              <option value="Other">Other</option>
             </select>
+            <div id="partnerInboxOtherNeedWrap" style="display:none">
+              <label for="partnerInboxOtherNeed">Tell me what you need</label>
+              <textarea id="partnerInboxOtherNeed" maxlength="1000" placeholder="Write what you need from me…"></textarea>
+            </div>
             <label for="partnerInboxAppreciation">One thing I appreciate about you today (optional)</label>
             <input id="partnerInboxAppreciation" maxlength="240" placeholder="Something you did, a little thing, or just you…">
             <label for="partnerInboxBody">Anything else on my heart? (optional)</label>
@@ -273,11 +278,12 @@
     if (state.sending) return;
     const feeling = document.getElementById("partnerInboxFeeling")?.value || "";
     const need = document.getElementById("partnerInboxNeed")?.value || "";
+    const otherNeed = document.getElementById("partnerInboxOtherNeed")?.value.trim() || "";
     const appreciation = document.getElementById("partnerInboxAppreciation")?.value.trim() || "";
     const note = document.getElementById("partnerInboxBody")?.value.trim() || "";
     const message_type = document.getElementById("partnerInboxType")?.value || "check_in";
-    if (!feeling || !need) {
-      showError("Choose how you're feeling and what you need before sending.");
+    if (!feeling || !need || (need === "Other" && !otherNeed)) {
+      showError(need === "Other" && !otherNeed ? "Please fill in what you need before sending." : "Choose how you're feeling and what you need before sending.");
       return;
     }
     const client = getClient();
@@ -297,7 +303,7 @@
       if (!state.user) throw new Error("Your sign-in session has expired. Sign out, sign back in, and try again.");
       const body = [
         "HOW I'M FEELING: " + feeling,
-        "WHAT I NEED FROM YOU: " + need,
+        "WHAT I NEED FROM YOU: " + (need === "Other" ? "Other — " + otherNeed : need),
         appreciation ? "SOMETHING I APPRECIATE: " + appreciation : "",
         note ? "A NOTE FROM ME: " + note : ""
       ].filter(Boolean).join("\n\n");
@@ -319,6 +325,8 @@
       document.getElementById("partnerInboxBody").value = "";
       document.getElementById("partnerInboxFeeling").value = "";
       document.getElementById("partnerInboxNeed").value = "";
+      document.getElementById("partnerInboxOtherNeed").value = "";
+      document.getElementById("partnerInboxOtherNeedWrap").style.display = "none";
       document.getElementById("partnerInboxAppreciation").value = "";
       state.note = "";
       state.error = "";
@@ -329,6 +337,15 @@
       state.sending = false;
       if (typeof window.render === "function" && document.body.dataset.page === "partnerInbox") window.render();
     }
+  };
+
+  window.partnerInboxToggleOtherNeed = function () {
+    const select = document.getElementById("partnerInboxNeed");
+    const wrap = document.getElementById("partnerInboxOtherNeedWrap");
+    const field = document.getElementById("partnerInboxOtherNeed");
+    const show = select?.value === "Other";
+    if (wrap) wrap.style.display = show ? "block" : "none";
+    if (field) field.required = !!show;
   };
 
   window.partnerInboxCompose = function () {
