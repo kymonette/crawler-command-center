@@ -307,20 +307,23 @@
         appreciation ? "SOMETHING I APPRECIATE: " + appreciation : "",
         note ? "A NOTE FROM ME: " + note : ""
       ].filter(Boolean).join("\n\n");
-      const { error } = await client.from("partner_messages").insert({
-        pair_id:PAIR_ID, sender_id:state.user.id, body, message_type
-      });
+      // Ask PostgREST to return the exact row it saved. This is a stronger
+      // confirmation than searching by message text after the insert.
+      const { data: savedMessage, error } = await client.from("partner_messages")
+        .insert({ pair_id:PAIR_ID, sender_id:state.user.id, body, message_type })
+        .select("id,pair_id,sender_id,body,message_type,created_at")
+        .single();
       if (error) throw error;
+      if (!savedMessage?.id) throw new Error("The server did not confirm the saved message. Please refresh the conversation before trying again.");
 
-      // Confirm the new row can be fetched into the shared conversation before showing success.
+      // Refresh history, but never discard a server-confirmed message just
+      // because the follow-up history read is temporarily delayed or fails.
       await loadMessages();
-      if (state.error) {
-        throw new Error("Your message was submitted, but I couldn't verify it in Shared Conversation. Tap Refresh before trying to send it again.");
+      if (!state.messages.some(m => m.id === savedMessage.id)) {
+        state.messages.push(savedMessage);
+        state.messages.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
       }
-      const appearsInHistory = state.messages.some(m => m.sender_id === state.user.id && m.body === body);
-      if (!appearsInHistory) {
-        throw new Error("Your message may have been submitted, but it isn't showing in Shared Conversation. Tap Refresh and check before sending it again.");
-      }
+      state.error = "";
 
       document.getElementById("partnerInboxBody").value = "";
       document.getElementById("partnerInboxFeeling").value = "";
