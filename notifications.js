@@ -165,7 +165,7 @@
   window.plannerDeleteReminder=deleteReminder;
   // Register this device on planner startup, not only when the notifications panel is opened.
   // This keeps scheduled alerts working even when the user never visits notification settings.
-  window.addEventListener("partnerInboxAuthChanged",()=>syncExistingPushSubscription().catch(e=>console.warn("[DCC notifications] auth-change registration failed:",e)));
+  window.addEventListener("partnerInboxAuthChanged",()=>setTimeout(()=>syncExistingPushSubscription().catch(e=>console.warn("[DCC notifications] auth-change registration failed:",e)),0));
   setTimeout(()=>syncExistingPushSubscription().catch(e=>console.warn("[DCC notifications] background registration failed:",e)),1200);
   const style=document.createElement("style");style.textContent=`
     .planner-notify-panel{border-color:${accent};}
