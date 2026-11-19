@@ -16,7 +16,7 @@
       client = session.client; currentUser = session.user; return session;
     }
     if (window.supabase?.createClient) {
-      client ||= window.supabase.createClient(PROJECT_URL,"sb_publishable_Y-IJuTcDrlUuUnXB-Onvng_ayim_Xd-",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+      client ||= window.supabase.createClient(PROJECT_URL,"sb_publishable_Y-IJuTcDrlUuUnXB-Onvng_ayim_Xd-",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:"sb-yvoaqoldfqknwrrelswh-dcc-auth"}});
       const {data,error}=await client.auth.getSession(); if(error)throw error;
       currentUser=data.session?.user||null; return {client,user:currentUser};
     }
@@ -165,6 +165,7 @@
   window.plannerDeleteReminder=deleteReminder;
   // Register this device on planner startup, not only when the notifications panel is opened.
   // This keeps scheduled alerts working even when the user never visits notification settings.
+  window.addEventListener("partnerInboxAuthChanged",()=>syncExistingPushSubscription().catch(e=>console.warn("[DCC notifications] auth-change registration failed:",e)));
   setTimeout(()=>syncExistingPushSubscription().catch(e=>console.warn("[DCC notifications] background registration failed:",e)),1200);
   const style=document.createElement("style");style.textContent=`
     .planner-notify-panel{border-color:${accent};}
