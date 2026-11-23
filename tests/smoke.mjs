@@ -19,7 +19,7 @@ const seed = {
       sleep: 7
     }
   },
-  habits: [{ name: 'Smoke habit', freq: 'Daily', done: [] }],
+  habits: [{ name: 'Smoke habit', freq: 'Daily', done: [new Date().getFullYear()+'-01-01', new Date().getFullYear()+'-01-02'] }],
   dogs: [
     { name: 'Test Dog One', breed: 'Cairn Terrier', age: '8', weight: '20 lb', medications: 'None', allergies: 'None', notes: 'Profile test', symptoms: [{ symptom: 'Itching', date: '2026-11-01', severity: 'Mild', kind: 'New symptom', duration: '1 day', notes: 'Original entry' }] },
     { name: 'Test Dog Two', breed: 'Cairn Terrier', symptoms: [] }
@@ -102,15 +102,22 @@ assert.equal(await page.locator('#view .money-field').count(), 3, 'income, expen
 assert.equal(await page.locator('#view input[name="amount"]').count(), 3);
 assert.equal(await page.locator('#view input[name="amount"]').first().getAttribute('step'), '0.01');
 
-// Add Book works and finished books no longer show page-tracking fields.
+// Reading library cards are clean; book editing and page logging live inside book detail.
 await page.evaluate(() => go('reading'));
 await page.getByRole('button', { name: '+ Add a book' }).click();
 await page.locator('#bookForm input[name="name"]').fill('New Test Book');
 await page.locator('#bookForm button[type="submit"]').click();
 await page.getByText('New Test Book', { exact: true }).waitFor();
 const newBookIndex = await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).books.findIndex(b => b.name === 'New Test Book'));
-await page.locator('.bookcard').nth(newBookIndex).locator('select').selectOption('Finished');
-assert.equal(await page.locator('.bookcard').nth(newBookIndex).locator('input[type="number"]').count(), 0, 'finished book should hide page fields');
+assert.equal(await page.locator('.bookcard').nth(newBookIndex).locator('input,select').count(), 0, 'library cards should not expose editable fields');
+await page.locator('.bookcard').nth(newBookIndex).click();
+await page.locator('#bookProgressForm select[name="status"]').selectOption('Finished');
+await page.locator('#bookProgressForm button[type="submit"]').click();
+assert.equal(await page.locator('#bookProgressForm select[name="status"]').inputValue(), 'Finished');
+await page.locator('#bookLogForm input[name="count"]').fill('12');
+await page.locator('#bookLogForm button[type="submit"]').click();
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).books.find(b => b.name === 'New Test Book').readingLog.length), 1, 'reading sessions should be logged from the book detail page');
+await page.getByRole('button', { name: '← Back to Library' }).click();
 // Pet detail should show one pet only, retain and edit symptom history
 await page.evaluate(() => go('dogs'));
 await page.evaluate(() => petDetail(0));
@@ -160,6 +167,13 @@ assert.equal(wellnessData.length, 0, 'wellness entries should be deletable');
 // Stats should contain visual progress bars; settings remains reachable
 await page.evaluate(() => go('stats'));
 assert.ok(await page.locator('#view .rpgbar').count() >= 2, 'stats should show HP/progress bars');
+const habitYear = new Date().getFullYear();
+const habitYearDays = ((habitYear%4===0&&habitYear%100!==0)||habitYear%400===0)?366:365;
+assert.match(await page.locator('#view').innerText(), new RegExp('2/'+habitYearDays), 'stats should show annual habit completion counts');
+await page.evaluate(() => go('habits'));
+page.once('dialog', dialog => dialog.accept());
+await page.getByRole('button', { name: 'Delete Smoke habit' }).click();
+assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('crawler-command-center')).habits.length), 0, 'habits should be deletable');
 await page.evaluate(() => go('settings'));
 assert.match(await page.locator('#view').innerText(), /BACKUP & RESTORE/, 'settings should remain accessible');
 assert.deepEqual(errors, [], 'browser should have no uncaught page errors');
