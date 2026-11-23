@@ -1,4 +1,4 @@
-const CACHE = "crawler-command-center-v63";
+const CACHE = "crawler-command-center-v64";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon.png", "./rpg.js?v=12", "./partner-inbox.js?v=15", "./notifications.js?v=7"];
 
 self.addEventListener("install", event => {
