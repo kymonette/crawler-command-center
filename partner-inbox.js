@@ -185,6 +185,32 @@
       </div>`;
   }
 
+  function renderConversation() {
+    if (document.body.dataset.page !== "partnerInbox") return;
+    const view = document.getElementById("view");
+    if (!view) return;
+    const fresh = document.createElement("div");
+    fresh.innerHTML = pageHtml();
+    const currentThread = view.querySelector(".partner-thread");
+    const freshThread = fresh.querySelector(".partner-thread");
+    if (currentThread && freshThread) currentThread.innerHTML = freshThread.innerHTML;
+    const currentCount = view.querySelector(".partner-compose .row .partner-small");
+    const freshCount = fresh.querySelector(".partner-compose .row .partner-small");
+    if (currentCount && freshCount) currentCount.textContent = freshCount.textContent;
+    const currentNotice = view.querySelector("#partnerInboxNotice");
+    if (currentNotice) {
+      if (state.error) {
+        currentNotice.style.display = "block";
+        currentNotice.className = "partner-status error";
+        currentNotice.textContent = state.error;
+      } else {
+        currentNotice.style.display = "none";
+        currentNotice.className = "partner-status";
+        currentNotice.textContent = "";
+      }
+    }
+  }
+
   async function loadMessages(markRead = false) {
     const client = getClient();
     if (!client || !state.user) return;
@@ -204,8 +230,10 @@
         state.unread = 0;
       }
       state.error = "";
+      renderConversation();
     } catch (e) {
       state.error = e?.message || "Could not load messages.";
+      renderConversation();
     } finally {
       state.loading = false;
       updateTileBadge();
@@ -360,7 +388,7 @@
 
   window.partnerInboxRefresh = async function () {
     await loadMessages(true);
-    window.render();
+    renderConversation();
   };
 
   window.partnerInboxGetSession = async function () {
